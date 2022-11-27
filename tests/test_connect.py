@@ -1,4 +1,4 @@
-from mumble.client import MumbleClient
+from lib.mumble.client import MumbleClient
 import time
 client = MumbleClient()
 print(client.get_session())

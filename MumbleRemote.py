@@ -1,13 +1,30 @@
 from lib.mumble.client import MumbleClient
 from queue import Queue
+from ssdpy import SSDPServer
+import socket
 
 from flask import Flask, json, request
 
-import threading, time, pymumble_py3
+import threading, time, pymumble_py3, uuid
 
 client = MumbleClient()
 
 cmd_queue = Queue()
+
+FLASK_PORT=5020
+
+# ------------------------------------------------------------------------------------------
+# Discoverability with SSDP
+# ------------------------------------------------------------------------------------------
+
+# Get IP Adress
+hostname=socket.gethostname()
+IPAddr=socket.gethostbyname(hostname)
+# Init SSDP Server
+server = SSDPServer("remote-talk-box-" + str(uuid.getnode()), device_type="mumble-remote-client", location='http://{ipaddr}:{port}/mumble-client'.format(ipaddr=IPAddr, port=FLASK_PORT))
+ssdp_daemon = threading.Thread(target=server.serve_forever, args=(), daemon=True)
+ssdp_daemon.start()
+
 
 # ------------------------------------------------------------------------------------------
 # API Calls
@@ -67,7 +84,7 @@ def disconnect_client():
 #  http://127.0.0.1:5000/mumble-client/shutdown
 
 if __name__ == '__main__':
-    flask_thread = threading.Thread(target=api.run, args=(), daemon=True)
+    flask_thread = threading.Thread(target=api.run, args=('0.0.0.0', FLASK_PORT), daemon=True)
     flask_thread.start()
 
 # ------------------------------------------------------------------------------------------
