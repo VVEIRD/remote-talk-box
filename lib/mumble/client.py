@@ -24,12 +24,12 @@ class MumbleClient:
     # mumble client set up
     def sound_received_handler(self, user, soundchunk):
         """ play sound received from mumble server upon its arrival """
-        self.stream.write(soundchunk.pcm)
+        self.stream_listen.write(soundchunk.pcm)
 
     def audio_reciver_daemon(self):
         # constant capturing sound and sending it to mumble server
         while self.active:
-            data = self.stream.read(self.CHUNK, exception_on_overflow=False)
+            data = self.stream_talk.read(self.CHUNK, exception_on_overflow=False)
             self.mumble.sound_output.add_sound(data)
 
     def connect(self, host=None, username=None, pwd=None, port=None):
@@ -45,11 +45,17 @@ class MumbleClient:
         #    self.disconnect()
         self.active = True
         self.pyAudio = pyaudio.PyAudio()
-        self.stream = self.pyAudio.open(format=self.FORMAT,
+        self.stream_listen = self.pyAudio.open(format=self.FORMAT,
+                        channels=self.CHANNELS,
+                        rate=self.RATE,
+                        input=False,  # enable both talk
+                        output=True,  # and listen
+                        frames_per_buffer=self.CHUNK)  
+        self.stream_talk = self.pyAudio.open(format=self.FORMAT,
                         channels=self.CHANNELS,
                         rate=self.RATE,
                         input=True,  # enable both talk
-                        output=True,  # and listen
+                        output=False,  # and listen
                         frames_per_buffer=self.CHUNK)   
         # Spin up a client and connect to mumble server
         self.mumble = pymumble_py3.Mumble(host=self.server, user=self.nick, password=self.pwd, port=self.port, reconnect=True)
@@ -77,7 +83,9 @@ class MumbleClient:
         self.mumble.stop()
         self.active = False
         # close the stream and pyaudio instance
-        self.stream.stop_stream()
-        self.stream.close()
+        self.stream_listen.stop_stream()
+        self.stream_listen.close()
+        self.stream_talk.stop_stream()
+        self.stream_talk.close()
         self.pyAudio.terminate()
         self.mumble = pymumble_py3.Mumble(host=self.server, user=self.nick, password=self.pwd, port=self.port, reconnect=True)
