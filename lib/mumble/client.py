@@ -13,7 +13,7 @@ class MumbleClient:
         self.nick = username
         self.port = port
         # pyaudio set up
-        self.CHUNK = 1024
+        self.CHUNK = 16384
         self.FORMAT = pyaudio.paInt16  
         self.CHANNELS = 1
         self.RATE = 48000 
