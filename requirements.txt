@@ -1,4 +1,4 @@
 pymumble
 flask
 ssdpy
-piaudio
+pyaudio
