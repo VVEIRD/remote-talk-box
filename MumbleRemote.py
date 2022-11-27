@@ -18,8 +18,9 @@ FLASK_PORT=5020
 # ------------------------------------------------------------------------------------------
 
 # Get IP Adress
-hostname=socket.gethostname()
-IPAddr=socket.gethostbyname(hostname)
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8", 80))
+IPAddr=s.getsockname()[0]
 # Init SSDP Server
 server = SSDPServer("remote-talk-box-" + str(uuid.getnode()), device_type="mumble-remote-client", location='http://{ipaddr}:{port}/mumble-client'.format(ipaddr=IPAddr, port=FLASK_PORT))
 ssdp_daemon = threading.Thread(target=server.serve_forever, args=(), daemon=True)
