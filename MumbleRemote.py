@@ -1,4 +1,4 @@
-from mumble.client import MumbleClient
+from lib.mumble.client import MumbleClient
 from queue import Queue
 
 from flask import Flask, json, request
