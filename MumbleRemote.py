@@ -33,16 +33,16 @@ ssdp_daemon.start()
 
 api = Flask(__name__)
 
+@api.route('/mumble-client', methods=['GET'])
+def get_overview():
+    return json.dumps(get_status())
+
 @api.route('/mumble-client/shutdown', methods=['GET'])
 def shutdown_client():
     cmd = {}
     cmd['action'] = 'shutdown'
     cmd_queue.put(cmd)
     return json.dumps({'shutdown': True})
-
-@api.route('/mumble-client', methods=['GET'])
-def get_status():
-    return json.dumps(client.get_session())
 
 @api.route('/mumble-client/connect', methods=['GET'])
 def connect_client():
@@ -75,6 +75,7 @@ def disconnect_client():
     cmd_queue.put(cmd)
     while not cmd['processed']:
         time.sleep(0.2)
+    print(cmd['result'])
     return json.dumps(cmd['result'])
 
 # URL to Connect to locallhost:
@@ -92,6 +93,14 @@ if __name__ == '__main__':
 # Functions
 # ------------------------------------------------------------------------------------------
 
+def get_status():
+    voice = client.get_session();
+    if voice is None:
+        voice = {'status': 'disconnected'}
+    else:
+        voice['status'] = 'connected'
+    return {'voice': voice}
+
 def connect_to_server(host, port, username, password):
     try:
         client.connect(host=host, username=username, pwd=password, port=port)
@@ -103,14 +112,14 @@ def connect_to_server(host, port, username, password):
         return {'error': 'invalid password, connection refused'}
     except:
         return {'error': 'internal server error'}
-    return client.get_session()
+    return get_status()
 
 def disconnect_from_server():
     try:
         client.disconnect()
     except Exception as e:
         print(e)
-    return client.get_session()
+    return get_status()
 
 
 # Process connect and disconnect commands
@@ -120,11 +129,11 @@ while True:
         if cmd['action'] ==  'connect':
             cmd['result'] = connect_to_server(cmd['host'], cmd['port'], cmd['username'], cmd['password'])
             if cmd['result']  is None:
-                cmd['result'] = {'status': 'disconnected'}
+                cmd['result'] = get_status()
         if cmd['action'] ==  'disconnect':
             cmd['result'] = disconnect_from_server()
             if cmd['result']  is None:
-                cmd['result'] = {'status': 'disconnected'}
+                cmd['result'] = get_status()
         if cmd['action'] ==  'shutdown':
             time.sleep(1)
             exit()
