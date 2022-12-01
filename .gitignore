@@ -2,3 +2,5 @@ opus.dll
 opusenc.dll
 opusfile.dll
 set_env.bat
+lib/mumble/__pycache__/client.cpython-310.pyc
+lib/mumble/__pycache__/

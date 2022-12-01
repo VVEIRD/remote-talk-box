@@ -79,11 +79,11 @@ def disconnect_client():
     return json.dumps(cmd['result'])
 
 # URL to Connect to locallhost:
-#  http://127.0.0.1:5000/mumble-client/connect?host=localhost&port=12000&username=ai-cube-1&password=Asdf1234
+#  http://127.0.0.1:5020/mumble-client/connect?host=localhost&port=12000&username=ai-cube-1&password=Asdf1234
 # URL to disconnect:
-#  http://127.0.0.1:5000/mumble-client/disconnect
+#  http://127.0.0.1:5020/mumble-client/disconnect
 # URL to Shutdown Client:
-#  http://127.0.0.1:5000/mumble-client/shutdown
+#  http://127.0.0.1:5020/mumble-client/shutdown
 
 if __name__ == '__main__':
     flask_thread = threading.Thread(target=api.run, args=('0.0.0.0', FLASK_PORT), daemon=True)
