@@ -81,6 +81,7 @@ def play_blink(name, blink_stick=None, endless=False):
 def get_blink_sticks():
     blink_list = []
     for blink_name in BLINK_STICKS:
+        stick = BLINK_STICKS[blink_name]
         if blink_name == 'default':
             continue
         entry = {'name': stick.get_serial(), 'description': bstick.get_description(), 'manufacturer':  bstick.get_manufacturer()}
