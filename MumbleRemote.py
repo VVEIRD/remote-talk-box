@@ -101,7 +101,7 @@ def get_status():
     else:
         voice['status'] = 'connected'
     leds = BlinkFacade.get_blink_sticks()
-    return {'voice': voice}
+    return {'voice': voice, 'leds': leds}
 
 def connect_to_server(host, port, username, password):
     try:
