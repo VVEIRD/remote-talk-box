@@ -57,6 +57,13 @@ def __init__():
         BLINKER_DAEMON_PROCESSES[stick_name].start()
     BLINK_STICKS['default'] = BLINK_STICKS[default_stick]
 
+def stop():
+    BLINKER_DAEMON_RUNNING = False
+    for daemon_name in BLINKER_DAEMON_PROCESSES:
+        BLINKER_DAEMON_PROCESSES[daemon_name].join()
+        BLINK_STICKS[daemon_name]
+        for i in range(8):
+            BLINK_STICKS[daemon_name].set_color(index=i, red=0, green=0, blue=0)
 
 def save_blinker(name, blinker):
     blinker_file = LD_PATH.joinpath(name + '.json')

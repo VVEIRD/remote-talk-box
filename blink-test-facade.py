@@ -27,9 +27,7 @@ BlinkFacade.play_blink(name='2-lights-rotating-3-times')
 BlinkFacade.play_blink(name='pulse-3s-4loops-dright-0-3', endless=True)
 
 def exit_handler():
-    for bstick in blinkstick.find_all():
-        for i in range(8):
-            bstick.set_color(index=i, red=0, green=0, blue=0)
+    BlinkFacade.stop()
 
 atexit.register(exit_handler)
 
