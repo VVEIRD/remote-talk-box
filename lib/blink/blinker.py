@@ -43,7 +43,7 @@ class Blinker:
         self.frames = []
     
     def animate(self, bstick):
-        frame_time = 1000/self.FPS
+        frame_time = 1.0/self.FPS
         for frame in self.frames:
             st = time.time()
             for i in self.led_range:
