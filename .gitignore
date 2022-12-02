@@ -4,3 +4,5 @@ opusfile.dll
 set_env.bat
 lib/mumble/__pycache__/client.cpython-310.pyc
 lib/mumble/__pycache__/
+lib/blink/__pycache__/blinker.cpython-310.pyc
+lib/blink/__pycache__/

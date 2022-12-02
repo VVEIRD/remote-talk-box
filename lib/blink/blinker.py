@@ -57,13 +57,12 @@ class Blinker:
         This will generate the frames for the given animation
         '''
         print("Generating")
-        match self.type:
-            case BlinkerTypes.PULSE:
-                self.frames = self._generate_pulse()
-            case BlinkerTypes.MORPH:
-                self.frames = self._generate_morph()
-            case BlinkerTypes.ANIMATION:
-                self.frames = self._generate_animation()
+        if self.type == BlinkerTypes.PULSE:
+            self.frames = self._generate_pulse()
+        elif self.type == BlinkerTypes.MORPH:
+            self.frames = self._generate_morph()
+        elif self.type == BlinkerTypes.ANIMATION:
+            self.frames = self._generate_animation()
 
     def _generate_animation(self):
         print("nolp")
