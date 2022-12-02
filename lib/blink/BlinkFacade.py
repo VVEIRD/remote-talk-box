@@ -30,7 +30,7 @@ def _blinker_daemon(stick_name):
         if current_blink is not None:
             print("Running: " + stick_name)
             current_blink.animate(BLINK_STICKS[stick_name])
-            if not endless:
+            if not endless or not BLINKER_DAEMON_RUNNING:
                 print("Removing: " + stick_name)
                 current_blink = None
         else:
