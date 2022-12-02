@@ -1,7 +1,6 @@
 from blinkstick import blinkstick
 from random import random
-import re
-import time
+import re, time
 from lib.blink.blinker import Blinker, BlinkerTypes
 
 for bstick in blinkstick.find_all():

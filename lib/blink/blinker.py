@@ -82,7 +82,7 @@ class Blinker:
         '''
         This will generate the frames for the given animation
         '''
-        print("Generating")
+        #print("Generating")
         if self.type == BlinkerTypes.PULSE:
             self.frames = self._generate_pulse()
         elif self.type == BlinkerTypes.MORPH:
@@ -110,7 +110,7 @@ class Blinker:
         loop_count = self.loop if loop else 1
         target = self.color_target if not reverse else self.color_source
         source = self.color_source if not reverse else self.color_target
-        print(source)
+        #print(source)
         target_colors = [ self._hex_to_rgb(c) for c in target]
         source_colors = [ self._hex_to_rgb(c) for c in source]
         gradient = []
