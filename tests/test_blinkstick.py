@@ -28,7 +28,7 @@ led_color = [
     [0,0,0] , # LED 8
 ]
 
-max_brightnes = 0.8
+max_brightnes = 0.3
 
 def hex_to_rgb(color_hex):
     HEX_COLOR_RE = re.compile(r'^#([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$')
@@ -57,10 +57,11 @@ def morph(bstick, color_target, color_source='#000000', duration=1000, steps=50)
     for grad in gradient:
         st = time.time()
         grad_r, grad_g, grad_b = grad
-        for i in range(8):
+        for i in [0,1,2,3,4,5,6,7]:
             led_color[i] = [grad_r, grad_g, grad_b]
             bstick.set_color(index=i, red=grad_r, green=grad_g, blue=grad_b)
         et = time.time()
+        print("Morphtime: " + str(et - st))
         time.sleep(ms_delay-(et - st) if ms_delay-(et - st) > 0 else 0)
 
 def pulse(bstick, color_hex, duration=1000, steps=40, loop=1):
@@ -78,28 +79,51 @@ def animate_led(blink, color_hex, animation, delay=0.250, decay=0.9, loop=3):
     b = b*max_brightnes
     # TODO: Precalc steps
     gradient = []
+    nleds = [led.copy() for led in led_color]
     while run < loop:
-        ms_delay = delay
         for i in range(len(animation)):
-            st = time.time()
             leds = animation[i]
-            led_color[0] = [r, g, b] if leds[0] == 1 else [led_color[0][0]*(1.0-decay), led_color[0][1]*(1.0-decay), led_color[0][2]*(1.0-decay)]
-            led_color[1] = [r, g, b] if leds[1] == 1 else [led_color[1][0]*(1.0-decay), led_color[1][1]*(1.0-decay), led_color[1][2]*(1.0-decay)]
-            led_color[2] = [r, g, b] if leds[2] == 1 else [led_color[2][0]*(1.0-decay), led_color[2][1]*(1.0-decay), led_color[2][2]*(1.0-decay)]
-            led_color[3] = [r, g, b] if leds[3] == 1 else [led_color[3][0]*(1.0-decay), led_color[3][1]*(1.0-decay), led_color[3][2]*(1.0-decay)]
-            led_color[4] = [r, g, b] if leds[4] == 1 else [led_color[4][0]*(1.0-decay), led_color[4][1]*(1.0-decay), led_color[4][2]*(1.0-decay)]
-            led_color[5] = [r, g, b] if leds[5] == 1 else [led_color[5][0]*(1.0-decay), led_color[5][1]*(1.0-decay), led_color[5][2]*(1.0-decay)]
-            led_color[6] = [r, g, b] if leds[6] == 1 else [led_color[5][0]*(1.0-decay), led_color[6][1]*(1.0-decay), led_color[6][2]*(1.0-decay)]
-            led_color[7] = [r, g, b] if leds[7] == 1 else [led_color[5][0]*(1.0-decay), led_color[7][1]*(1.0-decay), led_color[7][2]*(1.0-decay)]
-            for i in range(8):
-                bstick.set_color(index=i, red=led_color[i][0], green=led_color[i][1], blue=led_color[i][2])
-            et = time.time()
-            time.sleep(ms_delay-(et - st) if ms_delay-(et - st) > 0 else 0)
+            nleds[0] = [r, g, b] if leds[0] == 1 else [nleds[0][0]*(1.0-decay), nleds[0][1]*(1.0-decay), nleds[0][2]*(1.0-decay)]
+            nleds[1] = [r, g, b] if leds[1] == 1 else [nleds[1][0]*(1.0-decay), nleds[1][1]*(1.0-decay), nleds[1][2]*(1.0-decay)]
+            nleds[2] = [r, g, b] if leds[2] == 1 else [nleds[2][0]*(1.0-decay), nleds[2][1]*(1.0-decay), nleds[2][2]*(1.0-decay)]
+            nleds[3] = [r, g, b] if leds[3] == 1 else [nleds[3][0]*(1.0-decay), nleds[3][1]*(1.0-decay), nleds[3][2]*(1.0-decay)]
+            nleds[4] = [r, g, b] if leds[4] == 1 else [nleds[4][0]*(1.0-decay), nleds[4][1]*(1.0-decay), nleds[4][2]*(1.0-decay)]
+            nleds[5] = [r, g, b] if leds[5] == 1 else [nleds[5][0]*(1.0-decay), nleds[5][1]*(1.0-decay), nleds[5][2]*(1.0-decay)]
+            nleds[6] = [r, g, b] if leds[6] == 1 else [nleds[5][0]*(1.0-decay), nleds[6][1]*(1.0-decay), nleds[6][2]*(1.0-decay)]
+            nleds[7] = [r, g, b] if leds[7] == 1 else [nleds[5][0]*(1.0-decay), nleds[7][1]*(1.0-decay), nleds[7][2]*(1.0-decay)]
+            gradient.append(nleds.copy())
+            #time.sleep(ms_delay-(et - st) if ms_delay-(et - st) > 0 else 0)
         run += 1
+    for i in range(3):
+        nleds[0] = [nleds[0][0]*(1.0-decay), nleds[0][1]*(1.0-decay), nleds[0][2]*(1.0-decay)]
+        nleds[1] = [nleds[1][0]*(1.0-decay), nleds[1][1]*(1.0-decay), nleds[1][2]*(1.0-decay)]
+        nleds[2] = [nleds[2][0]*(1.0-decay), nleds[2][1]*(1.0-decay), nleds[2][2]*(1.0-decay)]
+        nleds[3] = [nleds[3][0]*(1.0-decay), nleds[3][1]*(1.0-decay), nleds[3][2]*(1.0-decay)]
+        nleds[4] = [nleds[4][0]*(1.0-decay), nleds[4][1]*(1.0-decay), nleds[4][2]*(1.0-decay)]
+        nleds[5] = [nleds[5][0]*(1.0-decay), nleds[5][1]*(1.0-decay), nleds[5][2]*(1.0-decay)]
+        nleds[6] = [nleds[5][0]*(1.0-decay), nleds[6][1]*(1.0-decay), nleds[6][2]*(1.0-decay)]
+        nleds[7] = [nleds[5][0]*(1.0-decay), nleds[7][1]*(1.0-decay), nleds[7][2]*(1.0-decay)]
+        gradient.append(nleds.copy())
+    ms_delay = delay
+    for grad in gradient:
+        st = time.time()
+        #for i in range(8):
+        bstick.set_color(index=0, red=grad[0][0], green=grad[0][1], blue=grad[0][2])
+        bstick.set_color(index=1, red=grad[1][0], green=grad[1][1], blue=grad[1][2])
+        bstick.set_color(index=2, red=grad[2][0], green=grad[2][1], blue=grad[2][2])
+        bstick.set_color(index=3, red=grad[3][0], green=grad[3][1], blue=grad[3][2])
+        bstick.set_color(index=4, red=grad[4][0], green=grad[4][1], blue=grad[4][2])
+        bstick.set_color(index=5, red=grad[5][0], green=grad[5][1], blue=grad[5][2])
+        bstick.set_color(index=6, red=grad[6][0], green=grad[6][1], blue=grad[6][2])
+        bstick.set_color(index=7, red=grad[7][0], green=grad[7][1], blue=grad[7][2])
+        et = time.time()
+        print("Animate: " + str(et - st))
+        time.sleep(ms_delay-(et - st) if ms_delay-(et - st) > 0 else 0)
 
 for bstick in blinkstick.find_all():
     try:
         pulse(bstick, '#ce3385', 1000, 15, loop=1)
+        time.sleep(2)
         led_on = [
             [1, 0, 0, 0, 1, 0, 0, 0],
             [0, 1, 0, 0, 0, 1, 0, 0],
@@ -114,7 +138,7 @@ for bstick in blinkstick.find_all():
         ]
         #animate_led(blink=bstick, animation=led_on, delay=0.350, color_hex='#ce3385', loop=10)
         animate_led(blink=bstick, animation=led_on, delay=0.100, decay=0.8, color_hex='#ce3385', loop=10)
-        animate_led(blink=bstick, animation=led_on_2, delay=0.350, decay=0.8, color_hex='#ce3385', loop=10)
+        animate_led(blink=bstick, animation=led_on_2, delay=0.200, decay=0.8, color_hex='#ce3385', loop=10)
         for i in range(8):
             bstick.set_color(index=i, red=0, green=0, blue=0)
     except KeyboardInterrupt as e:
