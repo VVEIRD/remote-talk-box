@@ -49,7 +49,7 @@ class Blinker:
             for i in self.led_range:
                 bstick.set_color(index=i, red=frame[i][0], green=frame[i][1], blue=frame[i][2])
             et = time.time()
-            print("Animate: " + str(et - st))
+            #print("Animate: " + str(et - st))
             time.sleep(frame_time-(et - st) if frame_time-(et - st) > 0 else 0)
 
     def generate(self):
