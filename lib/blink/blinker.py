@@ -44,6 +44,7 @@ class Blinker:
         self.filter_frames = [[ 1 for i in range(blinker_leds) ]]
         self.current_filter_frame = 0
         self.led_current = [ [0,0,0] for i in range(blinker_leds) ]
+        self.generated = False
 
     def add_filter_frames(self, filter_frames, backfill=0):
         for frame in filter_frames:
@@ -52,7 +53,6 @@ class Blinker:
                 for i in range(self.blinker_leds-f_led_count):
                     frame.append(backfill)
         self.filter_frames = filter_frames.copy()
-
 
    
     def _get_filter_frame(self):
@@ -63,6 +63,8 @@ class Blinker:
         return self.filter_frames[self.current_filter_frame]
     
     def animate(self, bstick):
+        if not self.generated:
+            self.generate()
         frame_time = 1.0/self.FPS
         for frame in self.frames:
             st = time.time()
@@ -87,6 +89,7 @@ class Blinker:
             self.frames = self._generate_morph()
         elif self.type == BlinkerTypes.ANIMATION:
             self.frames = self._generate_animation()
+        self.generated = True
 
     def _generate_animation(self):
         print("nolp")
@@ -119,9 +122,14 @@ class Blinker:
                 for i in range(self.blinker_leds):
                     r_start, g_start, b_start = source_colors[i]
                     r_end, g_end, b_end = target_colors[i]
-                    r = ((r_start * (1 - d)) + (r_end * d)) * self.brightnes
-                    g = ((g_start * (1 - d)) + (g_end * d)) * self.brightnes
-                    b = ((b_start * (1 - d)) + (b_end * d)) * self.brightnes
+                    if n == steps-1:
+                        r = r_end* self.brightnes
+                        g = g_end * self.brightnes
+                        b = b_end * self.brightnes
+                    else:
+                        r = ((r_start * (1 - d)) + (r_end * d)) * self.brightnes
+                        g = ((g_start * (1 - d)) + (g_end * d)) * self.brightnes
+                        b = ((b_start * (1 - d)) + (b_end * d)) * self.brightnes
                     leds.append((r, g, b))
                 gradient.append(leds)
         return gradient

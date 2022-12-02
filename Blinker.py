@@ -136,14 +136,17 @@ filter_frames = [
             [0, 0, 0, 1, 0, 0, 0, 1],
             [1, 0, 0, 1, 1, 0, 0, 1]
         ]
-b = Blinker(type=BlinkerTypes.PULSE, color_target=color_target, color_source=color_source, duration_ms=3000, brightnes=0.3, loop=3, decay=0.3)
-b.add_filter_frames(filter_frames)
-b.generate()
+b_pulse = Blinker(type=BlinkerTypes.PULSE, color_target=color_target, color_source=color_source, duration_ms=3000, brightnes=0.3, loop=3, decay=0.3)
+b_pulse.add_filter_frames(filter_frames)
+b_pulse.generate()
+b_pulse_2 = Blinker(type=BlinkerTypes.PULSE, color_target=color_target, duration_ms=3000, brightnes=0.3, loop=4, decay=0.3)
+b_pulse_2.generate()
 for bstick in blinkstick.find_all():
     try:
-        b.animate(bstick)
+        b_pulse.animate(bstick)
         print("time.sleep()")
         time.sleep(5)
+        b_pulse_2.animate(bstick)
         pulse(bstick, '#ce3385', 1000, 15, loop=1)
         time.sleep(2)
         led_on = [
