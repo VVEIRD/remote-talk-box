@@ -64,7 +64,7 @@ def save_blinker(name, blinker):
         blinker_io.write(blinker.to_json())
     BLINKERS[name] = blinker
 
-def run_blink(name, blink_stick=None, endless=False):
+def play_blink(name, blink_stick=None, endless=False):
     if blink_stick is None:
         blink_stick = BLINK_STICKS['default'].get_serial()
     if name in BLINKERS:
