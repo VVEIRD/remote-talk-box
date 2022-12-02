@@ -28,10 +28,10 @@ def _blinker_daemon(stick_name):
             current_blink = cmd[0]
             endless = cmd[1]
         if current_blink is not None:
-            print("Running: " + stick_name)
+            #print("Running: " + stick_name)
             current_blink.animate(BLINK_STICKS[stick_name])
             if not endless:
-                print("Removing: " + stick_name)
+                #print("Removing: " + stick_name)
                 current_blink = None
         else:
             time.sleep(0.2)
@@ -77,5 +77,15 @@ def play_blink(name, blink_stick=None, endless=False):
     if name in BLINKERS:
         cmd = [BLINKERS[name], endless]
         BD_QUEUES[blink_stick].put(cmd)
+
+def get_blink_sticks():
+    blink_list = []
+    for blink_name in BLINK_STICKS:
+        if blink_name == 'default':
+            continue
+        entry = {'name' = stick.get_serial(), 'description' = bstick.get_description(), 'manufacturer' =  bstick.get_manufacturer()}
+        blink_list.append(entry)
+    return blink_list
+
 
 __init__()

@@ -1,4 +1,5 @@
 from lib.mumble.client import MumbleClient
+import lib.blink.BlinkFacade as BlinkFacade
 from queue import Queue
 from ssdpy import SSDPServer
 import socket
@@ -99,6 +100,7 @@ def get_status():
         voice = {'status': 'disconnected'}
     else:
         voice['status'] = 'connected'
+    leds = BlinkFacade.get_blink_sticks()
     return {'voice': voice}
 
 def connect_to_server(host, port, username, password):
