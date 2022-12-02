@@ -146,7 +146,7 @@ class Blinker:
         json_o['blinker_leds'] = self.blinker_leds
         json_o['filter_frames'] = self.filter_frames
         json_o['loop'] = self.loop
-        return json.dumps(json_o)
+        return json.dumps(json_o, indent=4)
 
     @staticmethod
     def from_json(json_text):
