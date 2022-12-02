@@ -2,3 +2,5 @@ pymumble
 flask
 ssdpy
 pyaudio
+blinkstick
+pyusb
