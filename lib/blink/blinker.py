@@ -1,8 +1,8 @@
-import re, time
+import re, time, json
 from enum import Enum
 from blinkstick import blinkstick
 
-class BlinkerTypes(Enum):
+class BlinkerTypes(int, Enum):
     PULSE = 1
     ANIMATION = 2
     MORPH = 3
@@ -133,3 +133,34 @@ class Blinker:
                     leds.append((r, g, b))
                 gradient.append(leds)
         return gradient
+
+    def to_json(self):
+        json_o = {}
+        json_o['type'] = self.type
+        json_o['color_target'] = self.color_target
+        json_o['color_source'] = self.color_source
+        json_o['duration_ms'] = self.duration_ms
+        json_o['decay'] = self.decay
+        json_o['FPS'] = self.FPS
+        json_o['brightnes'] = self.brightnes
+        json_o['blinker_leds'] = self.blinker_leds
+        json_o['filter_frames'] = self.filter_frames
+        json_o['loop'] = self.loop
+        return json.dumps(json_o)
+
+    @staticmethod
+    def from_json(json_text):
+        json_o = json.loads(json_text)
+        b = Blinker(
+            type = json_o['type'],
+            color_target = json_o['color_target'],
+            color_source = json_o['color_source'],
+            duration_ms = int(json_o['duration_ms']),
+            blinker_leds = int(json_o['blinker_leds']),
+            decay = float(json_o['decay']),
+            loop = int(json_o['loop']),
+            brightnes = (json_o['brightnes'])
+        )
+        b.add_filter_frames(json_o['filter_frames'])
+        b.generate()
+        return b

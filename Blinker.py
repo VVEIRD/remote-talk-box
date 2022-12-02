@@ -139,6 +139,8 @@ filter_frames = [
 b_pulse = Blinker(type=BlinkerTypes.PULSE, color_target=color_target, color_source=color_source, duration_ms=3000, brightnes=0.3, loop=3, decay=0.3)
 b_pulse.add_filter_frames(filter_frames)
 b_pulse.generate()
+print(b_pulse.to_json())
+b_pulse = Blinker.from_json(b_pulse.to_json())
 b_pulse_2 = Blinker(type=BlinkerTypes.PULSE, color_target=color_target, duration_ms=3000, brightnes=0.3, loop=4, decay=0.3)
 b_pulse_2.generate()
 for bstick in blinkstick.find_all():
