@@ -41,13 +41,37 @@ class Blinker:
         self.blinker_leds = blinker_leds
         self.led_range = range(blinker_leds)
         self.frames = []
+        self.filter_frames = [[ 1 for i in range(blinker_leds) ]]
+        self.current_filter_frame = 0
+        self.led_current = [ [0,0,0] for i in range(blinker_leds) ]
+
+    def add_filter_frames(self, filter_frames, backfill=0):
+        for frame in filter_frames:
+            f_led_count = len(frame)
+            if f_led_count < self.blinker_leds:
+                for i in range(self.blinker_leds-f_led_count):
+                    frame.append(backfill)
+        self.filter_frames = filter_frames.copy()
+
+
+   
+    def _get_filter_frame(self):
+        if self.current_filter_frame+1 >= len(self.filter_frames):
+            self.current_filter_frame = 0
+        else:
+            self.current_filter_frame += 1
+        return self.filter_frames[self.current_filter_frame]
     
     def animate(self, bstick):
         frame_time = 1.0/self.FPS
         for frame in self.frames:
             st = time.time()
+            filter_frame = self._get_filter_frame()
             for i in self.led_range:
-                bstick.set_color(index=i, red=frame[i][0], green=frame[i][1], blue=frame[i][2])
+                a = filter_frame[i]
+                color = frame[i] if filter_frame[i] == 1 else [self.led_current[i][0]*(1.0-self.decay), self.led_current[i][1]*(1.0-self.decay), self.led_current[i][2]*(1.0-self.decay)]
+                bstick.set_color(index=i, red=color[0], green=color[1], blue=color[2])
+                self.led_current[i] = color
             et = time.time()
             #print("Animate: " + str(et - st))
             time.sleep(frame_time-(et - st) if frame_time-(et - st) > 0 else 0)

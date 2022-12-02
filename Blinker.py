@@ -122,7 +122,22 @@ def animate_led(blink, color_hex, animation, delay=0.250, decay=0.9, loop=3):
         time.sleep(ms_delay-(et - st) if ms_delay-(et - st) > 0 else 0)
 color_source = ['#00967d', '#ce3385', '#00967d', '#ce3385', '#00967d', '#ce3385', '#00967d', '#ce3385']
 color_target = ['#ce3385', '#00967d', '#ce3385', '#00967d', '#ce3385', '#00967d', '#ce3385', '#00967d']
-b = Blinker(type=BlinkerTypes.PULSE, color_target=color_target, color_source=color_source, duration_ms=3000, brightnes=0.2, loop=3)
+filter_frames = [
+            [1, 0, 0, 0, 1, 0, 0, 0],
+            [1, 0, 0, 0, 1, 0, 0, 0],
+            [1, 1, 0, 0, 1, 1, 0, 0],
+            [0, 1, 0, 0, 0, 1, 0, 0],
+            [0, 1, 0, 0, 0, 1, 0, 0],
+            [0, 1, 1, 0, 0, 1, 1, 0],
+            [0, 0, 1, 0, 0, 0, 1, 0],
+            [0, 0, 1, 0, 0, 0, 1, 0],
+            [0, 0, 1, 1, 0, 0, 1, 1],
+            [0, 0, 0, 1, 0, 0, 0, 1],
+            [0, 0, 0, 1, 0, 0, 0, 1],
+            [1, 0, 0, 1, 1, 0, 0, 1]
+        ]
+b = Blinker(type=BlinkerTypes.PULSE, color_target=color_target, color_source=color_source, duration_ms=3000, brightnes=0.3, loop=3, decay=0.3)
+b.add_filter_frames(filter_frames)
 b.generate()
 for bstick in blinkstick.find_all():
     try:
