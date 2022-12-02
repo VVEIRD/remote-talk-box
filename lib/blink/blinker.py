@@ -69,14 +69,18 @@ class Blinker:
         return []
 
     def _generate_pulse(self):
-        duration = self.duration_ms
-        self.duration_ms = self.duration_ms/2
-        g1 = self._generate_morph()
-        g2 = self._generate_morph(reverse = True)
-        self.duration_ms = duration
-        return [*g1, *g2]
+        frames = []
+        for i in self.loop:
+            duration = self.duration_ms
+            self.duration_ms = self.duration_ms/2
+            g1 = self._generate_morph(loop = False)
+            g2 = self._generate_morph(reverse = True, loop = False)
+            self.duration_ms = duration
+            frames = [*frames, *g1, *g2]
+        return frames
 
-    def _generate_morph(self, reverse = False):
+    def _generate_morph(self, reverse = False, loop=True):
+        loop_count = self.loop if loop else 1
         target = self.color_target if not reverse else self.color_source
         source = self.color_source if not reverse else self.color_target
         print(source)
@@ -84,15 +88,16 @@ class Blinker:
         source_colors = [ self._hex_to_rgb(c) for c in source]
         gradient = []
         steps = int(self.duration_ms / (1000/self.FPS))
-        for n in range(1, steps):
-            leds = []
-            d = 1.0 * n / steps
-            for i in range(self.blinker_leds):
-                r_start, g_start, b_start = source_colors[i]
-                r_end, g_end, b_end = target_colors[i]
-                r = ((r_start * (1 - d)) + (r_end * d)) * self.brightnes
-                g = ((g_start * (1 - d)) + (g_end * d)) * self.brightnes
-                b = ((b_start * (1 - d)) + (b_end * d)) * self.brightnes
-                leds.append((r, g, b))
-            gradient.append(leds)
+        for i in range(loop_count):
+            for n in range(1, steps):
+                leds = []
+                d = 1.0 * n / steps
+                for i in range(self.blinker_leds):
+                    r_start, g_start, b_start = source_colors[i]
+                    r_end, g_end, b_end = target_colors[i]
+                    r = ((r_start * (1 - d)) + (r_end * d)) * self.brightnes
+                    g = ((g_start * (1 - d)) + (g_end * d)) * self.brightnes
+                    b = ((b_start * (1 - d)) + (b_end * d)) * self.brightnes
+                    leds.append((r, g, b))
+                gradient.append(leds)
         return gradient
