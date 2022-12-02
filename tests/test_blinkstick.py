@@ -2,6 +2,7 @@ from blinkstick import blinkstick
 from random import random
 import re
 import time
+from lib.blink.blinker import Blinker, BlinkerTypes
 
 for bstick in blinkstick.find_all():
     print("Found device:")
@@ -120,6 +121,8 @@ def animate_led(blink, color_hex, animation, delay=0.250, decay=0.9, loop=3):
         print("Animate: " + str(et - st))
         time.sleep(ms_delay-(et - st) if ms_delay-(et - st) > 0 else 0)
 
+b = Blinker(type=BlinkerTypes.PULSE, color_target='#ce3385', duration_ms=1000)
+b.generate()
 for bstick in blinkstick.find_all():
     try:
         pulse(bstick, '#ce3385', 1000, 15, loop=1)
