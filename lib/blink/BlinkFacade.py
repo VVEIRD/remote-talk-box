@@ -15,14 +15,14 @@ BLINK_STICKS = {}
 LD_PATH = Path('data', 'blink')
 
 BLINKER_DAEMON_PROCESSES = {}
-BLINKER_DAEMON_RUNNING = True
+BLINKER_DAEMON_RUNNING = [True]
 
 BD_QUEUES = {}
 
 def _blinker_daemon(stick_name):    
     current_blink = None
     endless = False
-    while BLINKER_DAEMON_RUNNING:
+    while BLINKER_DAEMON_RUNNING[0]:
         if not BD_QUEUES[stick_name].empty():
             cmd = BD_QUEUES[stick_name].get()
             current_blink = cmd[0]
@@ -30,7 +30,7 @@ def _blinker_daemon(stick_name):
         if current_blink is not None:
             print("Running: " + stick_name)
             current_blink.animate(BLINK_STICKS[stick_name])
-            if not endless or not BLINKER_DAEMON_RUNNING:
+            if not endless:
                 print("Removing: " + stick_name)
                 current_blink = None
         else:
@@ -58,7 +58,7 @@ def __init__():
     BLINK_STICKS['default'] = BLINK_STICKS[default_stick]
 
 def stop():
-    BLINKER_DAEMON_RUNNING = False
+    BLINKER_DAEMON_RUNNING[0] = False
     for daemon_name in BLINKER_DAEMON_PROCESSES:
         BLINKER_DAEMON_PROCESSES[daemon_name].join()
         BLINK_STICKS[daemon_name]
