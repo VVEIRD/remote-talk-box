@@ -70,7 +70,7 @@ class Blinker:
 
     def _generate_pulse(self):
         frames = []
-        for i in self.loop:
+        for i in range(self.loop):
             duration = self.duration_ms
             self.duration_ms = self.duration_ms/2
             g1 = self._generate_morph(loop = False)
