@@ -84,7 +84,7 @@ def get_blink_sticks():
         stick = BLINK_STICKS[blink_name]
         if blink_name == 'default':
             continue
-        entry = {'name': stick.get_serial(), 'description': bstick.get_description(), 'manufacturer':  bstick.get_manufacturer()}
+        entry = {'name': stick.get_serial(), 'description': stick.get_description(), 'manufacturer':  stick.get_manufacturer()}
         blink_list.append(entry)
     return blink_list
 
