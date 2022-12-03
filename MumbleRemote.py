@@ -54,7 +54,7 @@ def shutdown_client():
 def leds_status():
     leds = BlinkFacade.get_devices()
     blinks = BlinkFacade.get_blinks()
-    return Response(json.dumps({'devices': leds, 'blinks': blinks}, indent=4), status=200, mimetype='application/json')
+    return Response(json.dumps({'leds': {'devices': leds, 'blinks': blinks}}, indent=4), status=200, mimetype='application/json')
 
 @api.route('/rt-box/led/play', methods=['GET'])
 def play_blink():
@@ -83,6 +83,15 @@ def get_blink(blink_name):
 # ------------------------------------------------------------------------------------------
 # Voice API Calls
 # ------------------------------------------------------------------------------------------
+
+@api.route('/rt-box/voice', methods=['GET'])
+def get_voice_overview():
+    voice = client.get_session()
+    if voice is None:
+        voice = {'status': 'disconnected'}
+    else:
+        voice['status'] = 'connected'
+    return Response(json.dumps({'voice': voice}, indent=4), status=200, mimetype='application/json')
 
 @api.route('/rt-box/voice/connect', methods=['GET'])
 def connect_client():
