@@ -36,14 +36,14 @@ api = Flask(__name__)
 
 @api.route('/rt-box', methods=['GET'])
 def get_overview():
-    return json.dumps(get_status(), indent=4)
+    return Response(json.dumps(get_status(), indent=4), status=200, mimetype='application/json')
 
 @api.route('/rt-box/shutdown', methods=['GET'])
 def shutdown_client():
     cmd = {}
     cmd['action'] = 'shutdown'
     cmd_queue.put(cmd)
-    return json.dumps({'shutdown': True}, indent=4)
+    return Response(json.dumps({'shutdown': True}, indent=4), status=200, mimetype='application/json')
 
 
 # ------------------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ def shutdown_client():
 def leds_status():
     leds = BlinkFacade.get_devices()
     blinks = BlinkFacade.get_blinks()
-    return json.dumps({'devices': leds, 'blinks': blinks}, indent=4)
+    return Response(json.dumps({'devices': leds, 'blinks': blinks}, indent=4), status=200, mimetype='application/json')
 
 @api.route('/rt-box/led/play', methods=['GET'])
 def play_blink():
