@@ -54,7 +54,7 @@ def shutdown_client():
 def leds_status():
     leds = BlinkFacade.get_devices()
     blinks = BlinkFacade.get_blinks()
-    return Response(json.dumps({'leds': {'devices': leds, 'blinks': blinks}}, indent=4), status=200, mimetype='application/json')
+    return Response(json.dumps({'led': {'devices': leds, 'blinks': blinks}}, indent=4), status=200, mimetype='application/json')
 
 @api.route('/rt-box/led/play', methods=['GET'])
 def play_blink():
@@ -150,7 +150,7 @@ def get_status():
         voice['status'] = 'connected'
     leds = BlinkFacade.get_devices()
     blinks = BlinkFacade.get_blinks()
-    return {'voice': voice, 'leds': {'devices': leds, 'blinks': blinks}}
+    return {'voice': voice, 'led': {'devices': leds, 'blinks': blinks}}
 
 def connect_to_server(host, port, username, password):
     try:
