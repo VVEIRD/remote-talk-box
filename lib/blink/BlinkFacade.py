@@ -55,7 +55,8 @@ def __init__():
         arg = str(stick_name)
         BLINKER_DAEMON_PROCESSES[stick_name] = threading.Thread(target=_blinker_daemon, args=(stick_name,), daemon=True)
         BLINKER_DAEMON_PROCESSES[stick_name].start()
-    BLINK_STICKS['default'] = BLINK_STICKS[default_stick]
+    if default_stick is not None:
+        BLINK_STICKS['default'] = BLINK_STICKS[default_stick]
 
 def stop():
     BLINKER_DAEMON_RUNNING[0] = False
@@ -71,22 +72,30 @@ def save_blinker(name, blinker):
         blinker_io.write(blinker.to_json())
     BLINKERS[name] = blinker
 
-def play_blink(name, blink_stick=None, endless=False):
-    if blink_stick is None:
-        blink_stick = BLINK_STICKS['default'].get_serial()
+def play_blink(name, device=None, endless=False):
+    if device is None:
+        device = BLINK_STICKS['default'].get_serial()
+    if device not in BLINK_STICKS:
+        raise ValueError("No device with the given name {device}".format(device=device))
     if name in BLINKERS:
         cmd = [BLINKERS[name], endless]
-        BD_QUEUES[blink_stick].put(cmd)
+        BD_QUEUES[device].put(cmd)
+    else:
+        raise ValueError("blink {name} does not exist".format(name=name))
 
-def get_blink_sticks():
+def get_devices():
     blink_list = []
-    for blink_name in BLINK_STICKS:
-        stick = BLINK_STICKS[blink_name]
-        if blink_name == 'default':
+    for device_name in BLINK_STICKS:
+        if device_name == 'default':
             continue
-        entry = {'name': stick.get_serial(), 'description': stick.get_description(), 'manufacturer':  stick.get_manufacturer()}
+        device = BLINK_STICKS[device_name]
+        entry = {'name': device.get_serial(), 'description': device.get_description(), 'manufacturer':  device.get_manufacturer()}
         blink_list.append(entry)
     return blink_list
 
+def get_blinks():
+    return [blink_name for blink_name in BLINKERS]
+def get_blink(blink_name):
+    return BLINKERS[blink_name] if blink_name in BLINKERS else None
 
 __init__()
