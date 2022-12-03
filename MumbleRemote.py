@@ -52,9 +52,8 @@ def shutdown_client():
 
 @api.route('/rt-box/led', methods=['GET'])
 def leds_status():
-    leds = BlinkFacade.get_devices()
-    blinks = BlinkFacade.get_blinks()
-    return Response(json.dumps({'led': {'devices': leds, 'blinks': blinks}}, indent=4), status=200, mimetype='application/json')
+    led_status = get_led_status()
+    return Response(json.dumps({'led': led_status}, indent=4), status=200, mimetype='application/json')
 
 @api.route('/rt-box/led/play', methods=['GET'])
 def play_blink():
@@ -85,12 +84,8 @@ def get_blink(blink_name):
 # ------------------------------------------------------------------------------------------
 
 @api.route('/rt-box/voice', methods=['GET'])
-def get_voice_overview():
-    voice = client.get_session()
-    if voice is None:
-        voice = {'status': 'disconnected'}
-    else:
-        voice['status'] = 'connected'
+def ROUTE_get_voice_overview():
+    voice = get_voice_status()
     return Response(json.dumps({'voice': voice}, indent=4), status=200, mimetype='application/json')
 
 @api.route('/rt-box/voice/connect', methods=['GET'])
@@ -143,14 +138,22 @@ if __name__ == '__main__':
 # ------------------------------------------------------------------------------------------
 
 def get_status():
+    voice = get_voice_status()
+    led_status= get_led_status()
+    return {'voice': voice, 'led': led_status}
+
+def get_voice_status():
     voice = client.get_session()
     if voice is None:
         voice = {'status': 'disconnected'}
     else:
         voice['status'] = 'connected'
+    return voice
+
+def get_led_status():
     leds = BlinkFacade.get_devices()
     blinks = BlinkFacade.get_blinks()
-    return {'voice': voice, 'led': {'devices': leds, 'blinks': blinks}}
+    return {'devices': leds, 'blinks': blinks}
 
 def connect_to_server(host, port, username, password):
     try:
@@ -170,8 +173,8 @@ def disconnect_from_server():
         client.disconnect()
     except Exception as e:
         print(e)
-        return Response(json.dumps(get_status(), indent=4), status=400, mimetype='application/json')
-    return Response(json.dumps(get_status(), indent=4), status=200, mimetype='application/json')
+        return Response(json.dumps(get_voice_status(), indent=4), status=400, mimetype='application/json')
+    return Response(json.dumps(get_voice_status(), indent=4), status=200, mimetype='application/json')
 
 
 
