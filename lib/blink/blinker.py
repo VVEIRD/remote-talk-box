@@ -62,18 +62,28 @@ class Blinker:
             self.current_filter_frame += 1
         return self.filter_frames[self.current_filter_frame]
     
-    def animate(self, bstick):
+    def animate(self, device, current_led_state=None):
+        if current_led_state is not None:
+            led_current = current_led_state
+        else:
+            led_current = self.led_current
         if not self.generated:
             self.generate()
         frame_time = 1.0/self.FPS
         for frame in self.frames:
             st = time.time()
             filter_frame = self._get_filter_frame()
+            if current_led_state is not None and len(current_led_state) < len(self.led_range):
+                ccal = len(current_led_state)
+                for i in range(len(self.led_range)-ccal):
+                    current_led_state.append([0,0,0])
             for i in self.led_range:
                 a = filter_frame[i]
-                color = frame[i] if filter_frame[i] == 1 else [self.led_current[i][0]*(1.0-self.decay), self.led_current[i][1]*(1.0-self.decay), self.led_current[i][2]*(1.0-self.decay)]
-                bstick.set_color(index=i, red=color[0], green=color[1], blue=color[2])
-                self.led_current[i] = color
+                color = frame[i] if filter_frame[i] == 1 else [led_current[i][0]*(1.0-self.decay), led_current[i][1]*(1.0-self.decay), led_current[i][2]*(1.0-self.decay)]
+                if current_led_state is not None:
+                    current_led_state[i] = [*color]
+                device.set_color(index=i, red=color[0], green=color[1], blue=color[2])
+                led_current[i] = color
             et = time.time()
             #print("Animate: " + str(et - st))
             time.sleep(frame_time-(et - st) if frame_time-(et - st) > 0 else 0)
