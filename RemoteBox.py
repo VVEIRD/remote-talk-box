@@ -24,7 +24,7 @@ s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 80))
 IPAddr=s.getsockname()[0]
 # Init SSDP Server
-server = SSDPServer("remote-talk-box-" + str(uuid.getnode()), device_type="mumble-remote-client", location='http://{ipaddr}:{port}/rt-box'.format(ipaddr=IPAddr, port=FLASK_PORT))
+server = SSDPServer("remote-talk-box-" + str(uuid.getnode()), device_type="remote-box-client", location='http://{ipaddr}:{port}/rt-box'.format(ipaddr=IPAddr, port=FLASK_PORT))
 ssdp_daemon = threading.Thread(target=server.serve_forever, args=(), daemon=True)
 ssdp_daemon.start()
 
@@ -172,9 +172,10 @@ def _get_audio_status():
 def _play_audio(audio_file):
     try:
         AudioFacade.play_audio_file(name=audio_file)
+        time.sleep(0.3)
     except ValueError as e:
         return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
-    return Response(json.dumps({'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
+    return Response(json.dumps({'status': 'Audio queued', 'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
 
 @api.route('/rt-box/audio/flush', methods=['GET'])
 def _flush_queue():
