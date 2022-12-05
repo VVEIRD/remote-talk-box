@@ -2,12 +2,12 @@ import re, time, json
 from enum import Enum
 from blinkstick import blinkstick
 
-class BlinkerTypes(int, Enum):
+class BlinkTypes(int, Enum):
     PULSE = 1
-    ANIMATION = 2
-    MORPH = 3
+    MORPH = 2
+    DECAY = 3
 
-class Blinker:
+class Blink:
     def _hex_to_rgb(self, color_hex):
         HEX_COLOR_RE = re.compile(r'^#([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$')
         try:
@@ -19,38 +19,37 @@ class Blinker:
         hex_digits = '#%s' % hex_digits.lower()
         return tuple([int(s, 16) for s in (hex_digits[1:3], hex_digits[3:5], hex_digits[5:7])])
         
-    def __init__(self, type, color_target, duration_ms, color_source='#000000', blinker_leds=8, decay=0.9, loop=1, brightnes=0.9):
+    def __init__(self, type, color_target, duration_ms, color_source='#000000', led_count=8, decay=0.9, loop=1, brightnes=0.9):
         if not isinstance(color_target, str) and not isinstance(color_target, list):
             raise ValueError('A color_target must be a list of hexcolors or a string with a hexcolor.')
         if not isinstance(color_source, str) and not isinstance(color_source, list):
             raise ValueError('A color_target must be a list of hexcolors or a string with a hexcolor.')
         if isinstance(color_source, str):
-            color_source_n = [color_source for i in range(blinker_leds)]
-            color_source = color_source_n
+            color_source = [color_source for i in range(led_count)]
         if isinstance(color_target, str):
-            color_target_n = [color_target for i in range(blinker_leds)]
-            color_target = color_target_n
+            color_target = [color_target for i in range(led_count)]
         self.type = type
         self.color_target = color_target
         self.color_source = color_source
-        self.duration_ms = duration_ms
+        self.duration_ms = max(duration_ms, 120)
         self.decay = decay
-        self.loop = loop
+        self.interrupt = False
+        self.loop = max(loop,1)
         self.FPS = 30
         self.brightnes = brightnes
-        self.blinker_leds = blinker_leds
-        self.led_range = range(blinker_leds)
+        self.led_count = led_count
+        self.led_range = range(led_count)
         self.frames = []
-        self.filter_frames = [[ 1 for i in range(blinker_leds) ]]
+        self.filter_frames = [[ 1 for i in range(led_count) ]]
         self.current_filter_frame = 0
-        self.led_current = [ [0,0,0] for i in range(blinker_leds) ]
+        self.led_current = [ [0,0,0] for i in range(led_count) ]
         self.generated = False
 
     def add_filter_frames(self, filter_frames, backfill=0):
         for frame in filter_frames:
             f_led_count = len(frame)
-            if f_led_count < self.blinker_leds:
-                for i in range(self.blinker_leds-f_led_count):
+            if f_led_count < self.led_count:
+                for i in range(self.led_count-f_led_count):
                     frame.append(backfill)
         self.filter_frames = filter_frames.copy()
 
@@ -63,14 +62,25 @@ class Blinker:
         return self.filter_frames[self.current_filter_frame]
     
     def animate(self, device, current_led_state=None):
+        # Make sure interrupt is not set
+        self.interrupt = False
         if current_led_state is not None:
             led_current = current_led_state
         else:
             led_current = self.led_current
-        if not self.generated:
+        # Set colour source to current led values for Decay animation
+        if self.type == BlinkTypes.DECAY:
+            self.color_source = [ '#%02x%02x%02x' % (int(current_led_state[i][0]), int(current_led_state[i][1]), int(current_led_state[i][2])) for i in range(self.led_count)]
+            self.color_target = [ '#000000' for i in range(self.led_count)]
+        # Generate animation frames if not generated or type = DECAY
+        if not self.generated or self.type == BlinkTypes.DECAY:
             self.generate()
         frame_time = 1.0/self.FPS
         for frame in self.frames:
+            # Stop animation
+            if self.interrupt:
+                self.interrupt = False
+                break
             st = time.time()
             filter_frame = self._get_filter_frame()
             if current_led_state is not None and len(current_led_state) < len(self.led_range):
@@ -88,22 +98,19 @@ class Blinker:
             #print("Animate: " + str(et - st))
             time.sleep(frame_time-(et - st) if frame_time-(et - st) > 0 else 0)
 
+    def stop_animation(self):
+        self.interrupt = True
+
     def generate(self):
         '''
         This will generate the frames for the given animation
         '''
         #print("Generating")
-        if self.type == BlinkerTypes.PULSE:
+        if self.type == BlinkTypes.PULSE:
             self.frames = self._generate_pulse()
-        elif self.type == BlinkerTypes.MORPH:
+        elif self.type == BlinkTypes.MORPH or self.type == BlinkTypes.DECAY:
             self.frames = self._generate_morph()
-        elif self.type == BlinkerTypes.ANIMATION:
-            self.frames = self._generate_animation()
         self.generated = True
-
-    def _generate_animation(self):
-        print("nolp")
-        return []
 
     def _generate_pulse(self):
         frames = []
@@ -129,7 +136,7 @@ class Blinker:
             for n in range(1, steps):
                 leds = []
                 d = 1.0 * n / steps
-                for i in range(self.blinker_leds):
+                for i in range(self.led_count):
                     r_start, g_start, b_start = source_colors[i]
                     r_end, g_end, b_end = target_colors[i]
                     if n == steps-1:
@@ -153,7 +160,7 @@ class Blinker:
         json_o['decay'] = self.decay
         json_o['FPS'] = self.FPS
         json_o['brightnes'] = self.brightnes
-        json_o['blinker_leds'] = self.blinker_leds
+        json_o['led_count'] = self.led_count
         json_o['filter_frames'] = self.filter_frames
         json_o['loop'] = self.loop
         return json.dumps(json_o, indent=4)
@@ -161,12 +168,12 @@ class Blinker:
     @staticmethod
     def from_json(json_text):
         json_o = json.loads(json_text)
-        b = Blinker(
+        b = Blink(
             type = json_o['type'],
             color_target = json_o['color_target'],
             color_source = json_o['color_source'],
             duration_ms = int(json_o['duration_ms']),
-            blinker_leds = int(json_o['blinker_leds']),
+            led_count = int(json_o['led_count']),
             decay = float(json_o['decay']),
             loop = int(json_o['loop']),
             brightnes = (json_o['brightnes'])

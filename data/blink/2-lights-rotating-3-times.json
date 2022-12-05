@@ -24,7 +24,7 @@
     "decay": 0.3,
     "FPS": 30,
     "brightnes": 0.3,
-    "blinker_leds": 8,
+    "led_count": 8,
     "filter_frames": [
         [
             1,

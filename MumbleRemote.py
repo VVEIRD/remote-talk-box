@@ -50,20 +50,49 @@ def shutdown_client():
 # LED API Calls
 # ------------------------------------------------------------------------------------------
 
-@api.route('/rt-box/led', methods=['GET'])
+@api.route('/rt-box/leds', methods=['GET'])
 def leds_status():
     led_status = get_led_status()
     return Response(json.dumps({'led': led_status}, indent=4), status=200, mimetype='application/json')
 
-@api.route('/rt-box/led/play', methods=['GET'])
-def play_blink():
-    name = request.args.get('name')
+@api.route('/rt-box/led/device/<device_name>', methods=['GET'])
+def led_device_status(device_name):
+    led_Device = BlinkFacade.get_device(device_name)
+    return Response(json.dumps(led_Device, indent=4), status=200, mimetype='application/json')
+
+
+@api.route('/rt-box/led/device/<device_name>/play/<name>', methods=['GET'])
+def play_blink(name, device_name):
     endless = request.args.get(key='endless', default=False, type=bool)
     try:
-        BlinkFacade.play_blink(name=name, endless=endless)
+        BlinkFacade.play_blink(name=name, device=device_name, endless=endless)
     except ValueError as e:
         return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
     return Response(json.dumps({'status': 'blink queued'}, indent=4), status=200, mimetype='application/json')
+
+@api.route('/rt-box/led/device/<device>/stop', methods=['GET'])
+def stop_blink(device):
+    endless = False
+    try:
+        BlinkFacade.stop_animation(device_name=device)
+    except ValueError as e:
+        return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
+    return Response(json.dumps({'status': 'stopping animation queued'}, indent=4), status=200, mimetype='application/json')
+
+@api.route('/rt-box/led/play/<name>', methods=['GET'])
+def play_blink_2(name):
+    device = request.args.get(key='device', default=None, type=str)
+    return play_blink(name=name, device_name=device)
+
+@api.route('/rt-box/led/play', methods=['GET'])
+def play_blink_3():
+    name = request.args.get('name')
+    return play_blink_2(name)
+
+@api.route('/rt-box/led/stop', methods=['GET'])
+def stop_blink_2():
+    device = request.args.get(key='device', default=None, type=str)
+    return stop_blink(device)
 
 @api.route('/rt-box/blinks', methods=['GET'])
 def get_blinks():
@@ -179,7 +208,7 @@ def disconnect_from_server():
 
 
 def exit_handler():
-    BlinkFacade.stop()
+    BlinkFacade.shutdown()
 
 atexit.register(exit_handler)
 
