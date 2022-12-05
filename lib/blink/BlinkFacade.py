@@ -72,6 +72,8 @@ def __init__():
         BLINKER_DAEMON_PROCESSES[stick_name].start()
     if default_stick is not None:
         BLINK_DEVICES['default'] = BLINK_DEVICES[default_stick]
+    if max_led_count is None:
+        max_led_count = 8
     # Load Blink Animations
     for blinker_file in LD_PATH.rglob("*.json"):
      with blinker_file.open(mode='r', encoding="utf8") as blinker_io:

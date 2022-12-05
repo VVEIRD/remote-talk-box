@@ -1,5 +1,6 @@
 from lib.mumble.client import MumbleClient
 import lib.blink.BlinkFacade as BlinkFacade
+import lib.audio.AudioFacade as AudioFacade
 from queue import Queue
 from ssdpy import SSDPServer
 import socket, atexit
@@ -152,15 +153,41 @@ def disconnect_client():
     return cmd['result']
 
 # URL to Connect to locallhost:
-#  http://127.0.0.1:5020/rt-box/connect?host=localhost&port=12000&username=ai-cube-1&password=Asdf1234
+#  http://127.0.0.1:5020/rt-box/voice/connect?host=localhost&port=12000&username=ai-cube-1&password=Asdf1234
 # URL to disconnect:
-#  http://127.0.0.1:5020/rt-box/disconnect
+#  http://127.0.0.1:5020/rt-box/voice/disconnect
 # URL to Shutdown Client:
 #  http://127.0.0.1:5020/rt-box/shutdown
 
-if __name__ == '__main__':
-    flask_thread = threading.Thread(target=api.run, args=('0.0.0.0', FLASK_PORT), daemon=True)
-    flask_thread.start()
+
+# ------------------------------------------------------------------------------------------
+# AUDIO API Calls
+# ------------------------------------------------------------------------------------------
+
+@api.route('/rt-box/audio', methods=['GET'])
+def _get_audio_status():
+    return Response(json.dumps({'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
+
+@api.route('/rt-box/audio/play/<audio_file>', methods=['GET'])
+def _play_audio(audio_file):
+    try:
+        AudioFacade.play_audio_file(name=audio_file)
+    except ValueError as e:
+        return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
+    return Response(json.dumps({'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
+
+@api.route('/rt-box/audio/flush', methods=['GET'])
+def _flush_queue():
+    AudioFacade.flush_queue()
+    return Response(json.dumps({'status': 'Queue flushed', 'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
+
+@api.route('/rt-box/audio/stop', methods=['GET'])
+def _stop_playback():
+    try:
+        AudioFacade.stop_playback()
+    except Exception as e:
+        return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
+    return Response(json.dumps({'status': 'Playback stopped', 'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
 
 # ------------------------------------------------------------------------------------------
 # Functions
@@ -169,7 +196,8 @@ if __name__ == '__main__':
 def get_status():
     voice = get_voice_status()
     led_status= get_led_status()
-    return {'voice': voice, 'led': led_status}
+    audio = get_audio_status()
+    return {'voice': voice, 'led': led_status, 'audio': audio}
 
 def get_voice_status():
     voice = client.get_session()
@@ -183,6 +211,12 @@ def get_led_status():
     leds = BlinkFacade.get_devices()
     blinks = BlinkFacade.get_blinks()
     return {'devices': leds, 'blinks': blinks}
+
+def get_audio_status():
+    audio_status = AudioFacade.get_audio_status()
+    audio_files = AudioFacade.get_audio_files()
+    audio_config = {'status': audio_status, 'audio_files': audio_files}
+    return audio_config
 
 def connect_to_server(host, port, username, password):
     try:
@@ -211,6 +245,10 @@ def exit_handler():
     BlinkFacade.shutdown()
 
 atexit.register(exit_handler)
+
+if __name__ == '__main__':
+    flask_thread = threading.Thread(target=api.run, args=('0.0.0.0', FLASK_PORT), daemon=True)
+    flask_thread.start()
 
 # Process connect and disconnect commands
 while True:
