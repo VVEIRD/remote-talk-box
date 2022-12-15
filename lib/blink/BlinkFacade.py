@@ -29,7 +29,6 @@ BD_QUEUES = {}
 
 def _blinker_daemon(stick_name):    
     current_blink = None
-    endless = False
     while BLINKER_DAEMON_RUNNING[stick_name]:
         if not BD_QUEUES[stick_name].empty():
             cmd = BD_QUEUES[stick_name].get()
@@ -39,7 +38,7 @@ def _blinker_daemon(stick_name):
         if current_blink is not None:
             #print("Running: " + stick_name)
             current_blink.animate(device=BLINK_DEVICES[stick_name], current_led_state=LED_STATES[stick_name])
-            if not endless:
+            if not ENDLESS_PLAY[stick_name]:
                 #print("Removing: " + stick_name)
                 current_blink = None
                 CURRENTLY_PLAYING[stick_name] = None
