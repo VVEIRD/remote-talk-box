@@ -63,8 +63,8 @@ def led_device_status(device_name):
 
 
 @api.route('/rt-box/led/device/<device_name>/play/<name>', methods=['GET'])
-def play_blink(name, device_name):
-    endless = request.args.get(key='endless', default=False, type=bool)
+def play_blink(name, device_name, endless=False):
+    endless = request.args.get(key='endless', default=endless, type=bool)
     try:
         BlinkFacade.play_blink(name=name, device=device_name, endless=endless)
     except ValueError as e:
@@ -83,12 +83,15 @@ def stop_blink(device):
 @api.route('/rt-box/led/play/<name>', methods=['GET'])
 def play_blink_2(name):
     device = request.args.get(key='device', default=None, type=str)
-    return play_blink(name=name, device_name=device)
+    endless = request.args.get(key='endless', default=False, type=bool)
+    return play_blink(name=name, device_name=device, endless=endless)
 
 @api.route('/rt-box/led/play', methods=['GET'])
 def play_blink_3():
     name = request.args.get('name')
-    return play_blink_2(name)
+    device = request.args.get(key='device', default=None, type=str)
+    endless = request.args.get(key='endless', default=False, type=bool)
+    return play_blink(name, device=device, endless=endless)
 
 @api.route('/rt-box/led/stop', methods=['GET'])
 def stop_blink_2():
