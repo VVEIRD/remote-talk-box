@@ -126,7 +126,7 @@ def shutdown(device_name=None):
         for i in range(8):
             BLINK_DEVICES[daemon_name].set_color(index=i, red=0, green=0, blue=0)
 
-def save_blinker(name, blinker):
+def save_blink(name, blinker):
     blinker_file = LD_PATH.joinpath(name + '.json')
     with blinker_file.open(mode='w', encoding="utf8") as blinker_io:
         blinker_io.write(blinker.to_json())

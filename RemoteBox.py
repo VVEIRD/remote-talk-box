@@ -1,6 +1,7 @@
 from lib.mumble.client import MumbleClient
 import lib.blink.BlinkFacade as BlinkFacade
 import lib.audio.AudioFacade as AudioFacade
+from lib.blink.blinker import BlinkTypes, Blink
 from queue import Queue
 from ssdpy import SSDPServer
 import socket, atexit
@@ -111,6 +112,17 @@ def get_blink(blink_name):
     else:
         return Response(json.dumps({'error': 'A blink with the name {name} does not exist'.format(name=blink_name)}, indent=4), status=400, mimetype='application/json')
 
+@api.route('/rt-box/blink/<blink_name>', methods=['PUT'])
+def update_blink(blink_name):
+    old_blink = BlinkFacade.get_blink(blink_name)
+    try:
+        new_blink = Blink.from_json(request.json)
+        BlinkFacade.save_blink(blink_name, new_blink)
+        if old_blink is None:
+            return Response(json.dumps({'status': 'New blink saved', 'new': new_blink}, indent=4), status=200, mimetype='application/json')
+        return Response(json.dumps({'status': 'Blink updated', 'new': new_blink, 'old': old_blink}, indent=4), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
 
 # ------------------------------------------------------------------------------------------
 # Voice API Calls
@@ -193,6 +205,22 @@ def _stop_playback():
         return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
     return Response(json.dumps({'status': 'Playback stopped', 'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
 
+@api.route('/rt-box/audio/random/add/<name>', methods=['GET'])
+def _add_random_playback(name):
+    try:
+        AudioFacade.add_random_playback(name)
+    except Exception as e:
+        return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
+    return Response(json.dumps({'status': '{audio} added'.format(audio=name), 'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
+
+@api.route('/rt-box/audio/random/remove/<name>', methods=['GET'])
+def _remove_random_playback(name):
+    try:
+        AudioFacade.remove_random_playback(name)
+    except Exception as e:
+        return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
+    return Response(json.dumps({'status': '{audio} removed'.format(audio=name), 'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
+
 # ------------------------------------------------------------------------------------------
 # Functions
 # ------------------------------------------------------------------------------------------
@@ -219,7 +247,8 @@ def get_led_status():
 def get_audio_status():
     audio_status = AudioFacade.get_audio_status()
     audio_files = AudioFacade.get_audio_files()
-    audio_config = {'status': audio_status, 'audio_files': audio_files}
+    random_playback = AudioFacade.get_random_playback()
+    audio_config = {'status': audio_status, 'audio_files': audio_files, 'random_playback': random_playback}
     return audio_config
 
 def connect_to_server(host, port, username, password):

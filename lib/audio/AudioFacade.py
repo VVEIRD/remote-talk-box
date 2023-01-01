@@ -3,8 +3,12 @@ import wave
 import sys
 import threading
 import time
+import random
+import json
+from json import JSONDecodeError
 from pathlib import Path
 from queue import Queue
+from datetime import datetime, timedelta
 
 # -------------------------------------------------------
 # CLASSes
@@ -58,10 +62,18 @@ AUDIO_PLAYER = [None]
 
 AUDIO_DAEMON = [None]
 
+RANDOM_PLAYBACK_PLAYER = [None]
+
+RANDOM_PLAYBACK_DAEMON = [None]
+RANDOM_PLAYBACK_NEXT_UP = ['Nothing', -1]
+
+RANDOM_CONFIG = {'min_interval': 900, 'max_interval': 3600, 'list': []}
+
 AUDIO_QUEUE = Queue()
 
-DAEMON_RUNNING = [True]
-CURRENTLY_PLAYING = [None]
+DAEMON_RUNNING = [True, True]
+
+CURRENTLY_PLAYING = [None, None]
 
 # -------------------------------------------------------
 # METHODs
@@ -73,6 +85,17 @@ def __init__():
         AUDIO_FILES[audio_file.stem] = str(audio_file.resolve())
     AUDIO_DAEMON = threading.Thread(target=_audio_daemon, daemon=True)
     AUDIO_DAEMON.start()
+    # Load Random Audio player
+    with LD_PATH.joinpath('random.json').open(mode='r', encoding="utf8") as random_io:
+        try:
+            json_o = json.loads(random_io.read())
+            RANDOM_CONFIG['min_interval'] = json_o['min_interval']
+            RANDOM_CONFIG['max_interval'] = json_o['max_interval']
+            RANDOM_CONFIG['list'] = json_o['list']
+        except JSONDecodeError as e:
+            print("Error loading random file {file}".format(file=random_io.absolute()))
+    RANDOM_PLAYBACK_DAEMON = threading.Thread(target=_random_audio_daemon, daemon=True)
+    RANDOM_PLAYBACK_DAEMON.start()
 
 def _audio_daemon():
     print('Start audio daemon')
@@ -93,8 +116,33 @@ def _audio_daemon():
             CURRENTLY_PLAYING[0] = None
             audio_file = None
         else:
-            time.sleep(0.2)
+            time.sleep(0.4)
     print('Stop audio daemon')
+
+def _random_audio_daemon():
+    print('Start random audio daemon')
+    audio_file = None
+    while DAEMON_RUNNING[1]:
+        sleepy_time = random.randint(RANDOM_CONFIG['min_interval'], RANDOM_CONFIG['max_interval'])
+        playback_starts_at = datetime.today() + timedelta(seconds=sleepy_time)
+        audio = random.choice(RANDOM_CONFIG['list'])
+        RANDOM_PLAYBACK_NEXT_UP[0] = audio
+        RANDOM_PLAYBACK_NEXT_UP[1] = playback_starts_at.isoformat()
+        print('Queing random playback for file {audio} at {date}'.format(audio=audio, date=playback_starts_at))
+        time.sleep(sleepy_time)
+        audio_file = AUDIO_FILES[audio]
+        if audio_file is not None:
+            CURRENTLY_PLAYING[1] = audio
+            audio = AudioFile(file=audio_file)
+            RANDOM_PLAYBACK_PLAYER[0] = audio
+            try:
+                audio.play()
+            finally:
+                RANDOM_PLAYBACK_PLAYER[0] = None
+                audio.close()
+            CURRENTLY_PLAYING[1] = None
+            audio_file = None
+    print('Stop random audio daemon')
 
 def play_audio_file(name:str):
     if name not in AUDIO_FILES:
@@ -115,8 +163,36 @@ def stop_playback():
     if AUDIO_PLAYER[0] is not None:
         AUDIO_PLAYER[0].close()
 
+def stop_random_playback():
+    if RANDOM_PLAYBACK_PLAYER[0] is not None:
+        RANDOM_PLAYBACK_PLAYER[0].close()
+
 def get_audio_files():
     ''' Returns all available audio files '''
     return [audio_name for audio_name in AUDIO_FILES]
+
+def get_random_playback():
+    random_playback_status = RANDOM_CONFIG.copy()
+    random_playback_status['next_up'] = RANDOM_PLAYBACK_NEXT_UP[0]
+    random_playback_status['played_at'] = RANDOM_PLAYBACK_NEXT_UP[1]
+    return random_playback_status
+
+def add_random_playback(name:str):
+    if name not in AUDIO_FILES:
+        raise ValueError("Cannot Audiofile {name} to random playback, it does not exists".format(name=name))
+    if name not in RANDOM_CONFIG['list']:
+        RANDOM_CONFIG['list'].append(name)
+        save_random_playback_config()
+
+def remove_random_playback(name:str):
+    if name not in RANDOM_CONFIG['list']:
+        raise ValueError("Cannot remove Audiofile {name} from random playback, it is not in the list".format(name=name))
+    RANDOM_CONFIG['list'].remove(name)
+    save_random_playback_config()
+
+def save_random_playback_config():
+    random_file = LD_PATH.joinpath('random.json')
+    with random_file.open(mode='w', encoding="utf8") as random_io:
+        random_io.write(json.dumps(RANDOM_CONFIG))
 
 __init__()

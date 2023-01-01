@@ -19,25 +19,38 @@ class Blink:
         hex_digits = '#%s' % hex_digits.lower()
         return tuple([int(s, 16) for s in (hex_digits[1:3], hex_digits[3:5], hex_digits[5:7])])
         
-    def __init__(self, type, color_target, duration_ms, color_source='#000000', led_count=8, decay=0.9, loop=1, brightnes=0.9):
+    def __init__(self, type, color_target, duration_ms, color_source='#000000', fps=30, led_count=8, decay=0.9, loop=1, brightnes=0.9):
+        # Test color target
         if not isinstance(color_target, str) and not isinstance(color_target, list):
             raise ValueError('A color_target must be a list of hexcolors or a string with a hexcolor.')
-        if not isinstance(color_source, str) and not isinstance(color_source, list):
+        if isinstance(color_target, str) and not re.match(r'^#([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$', color_target):
             raise ValueError('A color_target must be a list of hexcolors or a string with a hexcolor.')
+        if isinstance(color_target, list) and (len(color_target) == 0 or not re.match(r'^#([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$', color_target[0])):
+            raise ValueError('A color_target must be a list of hexcolors or a string with a hexcolor.')
+        # Test color source
+        if not isinstance(color_source, str) and not isinstance(color_source, list):
+            raise ValueError('A color_source must be a list of hexcolors or a string with a hexcolor.')
+        if isinstance(color_source, str) and not re.match(r'^#([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$', color_source):
+            raise ValueError('A color_source must be a list of hexcolors or a string with a hexcolor.')
+        if isinstance(color_source, list) and (len(color_source) == 0 or not re.match(r'^#([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$', color_source[0])):
+            raise ValueError('A color_source must be a list of hexcolors or a string with a hexcolor.')
+        # Make colors a list if their're not
         if isinstance(color_source, str):
             color_source = [color_source for i in range(led_count)]
         if isinstance(color_target, str):
             color_target = [color_target for i in range(led_count)]
-        self.type = type
+        self.type = type if type in (1,2,3) else 0
+        if self.type == 0:
+            raise ValueError('Type must be one of the following: 1, 2, 3')
         self.color_target = color_target
         self.color_source = color_source
         self.duration_ms = max(duration_ms, 120)
-        self.decay = decay
+        self.decay = max(min(decay, 1.0), 0.1)
         self.interrupt = False
-        self.loop = max(loop,1)
-        self.FPS = 30
-        self.brightnes = brightnes
-        self.led_count = led_count
+        self.loop = max(min(loop,10),1)
+        self.FPS = max(min(fps, 30),5)
+        self.brightnes = max(min(brightnes, 1.0), 0.1)
+        self.led_count = max(led_count, 1)
         self.led_range = range(led_count)
         self.frames = []
         self.filter_frames = [[ 1 for i in range(led_count) ]]
@@ -172,11 +185,12 @@ class Blink:
             type = json_o['type'],
             color_target = json_o['color_target'],
             color_source = json_o['color_source'],
+            fps = json_o['FPS'],
             duration_ms = int(json_o['duration_ms']),
             led_count = int(json_o['led_count']),
             decay = float(json_o['decay']),
             loop = int(json_o['loop']),
-            brightnes = (json_o['brightnes'])
+            brightnes = float(json_o['brightnes'])
         )
         b.add_filter_frames(json_o['filter_frames'])
         b.generate()
