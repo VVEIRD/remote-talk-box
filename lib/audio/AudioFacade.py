@@ -116,7 +116,7 @@ def _audio_daemon():
             CURRENTLY_PLAYING[0] = None
             audio_file = None
         else:
-            time.sleep(0.4)
+            time.sleep(0.5)
     print('Stop audio daemon')
 
 def _random_audio_daemon():
@@ -128,10 +128,12 @@ def _random_audio_daemon():
         audio = random.choice(RANDOM_CONFIG['list'])
         RANDOM_PLAYBACK_NEXT_UP[0] = audio
         RANDOM_PLAYBACK_NEXT_UP[1] = playback_starts_at.isoformat()
-        print('Queing random playback for file {audio} at {date}'.format(audio=audio, date=playback_starts_at))
-        time.sleep(sleepy_time)
         audio_file = AUDIO_FILES[audio]
+        # Queue file only if it exists (It should, but it could have been deleted on fs)
         if audio_file is not None:
+            print('Queing random playback for file {audio} at {date}'.format(audio=audio, date=playback_starts_at))
+            time.sleep(sleepy_time)
+        if audio_file is not None and DAEMON_RUNNING[1]:
             CURRENTLY_PLAYING[1] = audio
             audio = AudioFile(file=audio_file)
             RANDOM_PLAYBACK_PLAYER[0] = audio
@@ -142,6 +144,7 @@ def _random_audio_daemon():
                 audio.close()
             CURRENTLY_PLAYING[1] = None
             audio_file = None
+        time.sleep(0.5)
     print('Stop random audio daemon')
 
 def play_audio_file(name:str):
@@ -166,6 +169,17 @@ def stop_playback():
 def stop_random_playback():
     if RANDOM_PLAYBACK_PLAYER[0] is not None:
         RANDOM_PLAYBACK_PLAYER[0].close()
+
+def disable_random_playback():
+    DAEMON_RUNNING[1] = False
+    if RANDOM_PLAYBACK_PLAYER[0] is not None:
+        RANDOM_PLAYBACK_PLAYER[0].close()
+
+def enable_random_playback():
+    DAEMON_RUNNING[1] = True
+    if RANDOM_PLAYBACK_DAEMON is None or not RANDOM_PLAYBACK_DAEMON.is_alive():
+        RANDOM_PLAYBACK_DAEMON = threading.Thread(target=_random_audio_daemon, daemon=True)
+        RANDOM_PLAYBACK_DAEMON.start()
 
 def get_audio_files():
     ''' Returns all available audio files '''

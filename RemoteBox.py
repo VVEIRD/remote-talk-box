@@ -221,6 +221,14 @@ def _remove_random_playback(name):
         return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
     return Response(json.dumps({'status': '{audio} removed'.format(audio=name), 'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
 
+@api.route('/rt-box/audio/random/stop', methods=['GET'])
+def _stop_random_playback():
+    try:
+        AudioFacade.stop_random_playback()
+    except Exception as e:
+        return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
+    return Response(json.dumps({'status': 'Random playback stopped', 'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
+
 # ------------------------------------------------------------------------------------------
 # Functions
 # ------------------------------------------------------------------------------------------

@@ -19,6 +19,15 @@ Returns a json object with the current status of the audio playback service:
             "audio_files": [
                 "ghost-whispering"
             ],
+            "random_playback": {
+                "list": [
+                    "ghost-whispering"
+                ],
+                "max_interval": 3600,
+                "min_interval": 900,
+                "next_up": "ghost-whispering",
+                "played_at": "2023-01-01T12:38:41.148308"
+            },
             "status": {
                 "currently_playing": null,
                 "queue": [],
@@ -38,6 +47,15 @@ It will return the following json:
             "audio_files": [
                 "ghost-whispering"
             ],
+            "random_playback": {
+                "list": [
+                    "ghost-whispering"
+                ],
+                "max_interval": 3600,
+                "min_interval": 900,
+                "next_up": "ghost-whispering",
+                "played_at": "2023-01-01T12:36:01.084456"
+            },
             "status": {
                 "currently_playing": "ghost-whispering",
                 "queue": [],
@@ -57,6 +75,15 @@ This will stop the currently playing file and play the next queued file. It will
             "audio_files": [
                 "ghost-whispering"
             ],
+            "random_playback": {
+                "list": [
+                    "ghost-whispering"
+                ],
+                "max_interval": 3600,
+                "min_interval": 900,
+                "next_up": "ghost-whispering",
+                "played_at": "2023-01-01T12:36:01.084456"
+            },
             "status": {
                 "currently_playing": null,
                 "queue": [],
@@ -75,8 +102,17 @@ This will remove any queued files but not stop the currently playing audio. Retu
             "audio_files": [
                 "ghost-whispering"
             ],
+            "random_playback": {
+                "list": [
+                    "ghost-whispering"
+                ],
+                "max_interval": 3600,
+                "min_interval": 900,
+                "next_up": "ghost-whispering",
+                "played_at": "2023-01-01T12:36:01.084456"
+            },
             "status": {
-                "currently_playing": null,
+                "currently_playing": "ghost-whispering",
                 "queue": [],
                 "queue_count": 0
             }
