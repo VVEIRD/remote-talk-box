@@ -36,7 +36,7 @@ ssdp_daemon.start()
 
 api = Flask(__name__)
 
-@api.route('/rt-box', methods=['GET'])
+@api.route('/rt-box', methods=['GET'], strict_slashes=False)
 def get_overview():
     return Response(json.dumps(get_status(), indent=4), status=200, mimetype='application/json')
 
@@ -52,7 +52,7 @@ def shutdown_client():
 # LED API Calls
 # ------------------------------------------------------------------------------------------
 
-@api.route('/rt-box/leds', methods=['GET'])
+@api.route('/rt-box/leds', methods=['GET'], strict_slashes=False)
 def leds_status():
     led_status = get_led_status()
     return Response(json.dumps({'led': led_status}, indent=4), status=200, mimetype='application/json')
@@ -99,7 +99,7 @@ def stop_blink_2():
     device = request.args.get(key='device', default=None, type=str)
     return stop_blink(device)
 
-@api.route('/rt-box/blinks', methods=['GET'])
+@api.route('/rt-box/blinks', methods=['GET'], strict_slashes=False)
 def get_blinks():
     blinks = BlinkFacade.get_blinks()
     return Response(json.dumps(blinks, indent=4), status=200, mimetype='application/json')
@@ -128,7 +128,7 @@ def update_blink(blink_name):
 # Voice API Calls
 # ------------------------------------------------------------------------------------------
 
-@api.route('/rt-box/voice', methods=['GET'])
+@api.route('/rt-box/voice', methods=['GET'], strict_slashes=False)
 def ROUTE_get_voice_overview():
     voice = get_voice_status()
     return Response(json.dumps({'voice': voice}, indent=4), status=200, mimetype='application/json')
@@ -179,7 +179,7 @@ def disconnect_client():
 # AUDIO API Calls
 # ------------------------------------------------------------------------------------------
 
-@api.route('/rt-box/audio', methods=['GET'])
+@api.route('/rt-box/audio', methods=['GET'], strict_slashes=False)
 def _get_audio_status():
     return Response(json.dumps({'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
 
@@ -228,6 +228,22 @@ def _stop_random_playback():
     except Exception as e:
         return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
     return Response(json.dumps({'status': 'Random playback stopped', 'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
+
+@api.route('/rt-box/audio/random/disable', methods=['GET'])
+def _disable_random_playback():
+    try:
+        AudioFacade.disable_random_playback()
+    except Exception as e:
+        return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
+    return Response(json.dumps({'status': 'Random playback disabled', 'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
+
+@api.route('/rt-box/audio/random/enable', methods=['GET'])
+def _enable_random_playback():
+    try:
+        AudioFacade.enable_random_playback()
+    except Exception as e:
+        return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
+    return Response(json.dumps({'status': 'Random playback enabled', 'audio': get_audio_status()}, indent=4), status=200, mimetype='application/json')
 
 # ------------------------------------------------------------------------------------------
 # Functions

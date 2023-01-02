@@ -20,6 +20,7 @@ Returns a json object with the current status of the audio playback service:
                 "ghost-whispering"
             ],
             "random_playback": {
+                "status": "enabled"
                 "list": [
                     "ghost-whispering"
                 ],
@@ -118,4 +119,32 @@ This will remove any queued files but not stop the currently playing audio. Retu
             }
         },
         "status": "Queue flushed"
+    }
+
+
+### Stop the current random playback
+    http://192.168.1.10:5020/rt-box/audio/random/stop
+This will stop the currently playing file and play the next queued file. It will also return the following json response:
+
+    {
+        "audio": {
+            "audio_files": [
+                "ghost-whispering"
+            ],
+            "random_playback": {
+                "list": [
+                    "ghost-whispering"
+                ],
+                "max_interval": 3600,
+                "min_interval": 900,
+                "next_up": "ghost-whispering",
+                "played_at": "2023-01-01T12:36:01.084456"
+            },
+            "status": {
+                "currently_playing": null,
+                "queue": [],
+                "queue_count": 0
+            }
+        },
+        "status": "Random playback stopped"
     }

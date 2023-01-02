@@ -94,8 +94,8 @@ def __init__():
             RANDOM_CONFIG['list'] = json_o['list']
         except JSONDecodeError as e:
             print("Error loading random file {file}".format(file=random_io.absolute()))
-    RANDOM_PLAYBACK_DAEMON = threading.Thread(target=_random_audio_daemon, daemon=True)
-    RANDOM_PLAYBACK_DAEMON.start()
+    RANDOM_PLAYBACK_DAEMON[0] = threading.Thread(target=_random_audio_daemon, daemon=True)
+    RANDOM_PLAYBACK_DAEMON[0].start()
 
 def _audio_daemon():
     print('Start audio daemon')
@@ -131,8 +131,12 @@ def _random_audio_daemon():
         audio_file = AUDIO_FILES[audio]
         # Queue file only if it exists (It should, but it could have been deleted on fs)
         if audio_file is not None:
+            start_time = datetime.now()
+            end_time = datetime.now()
             print('Queing random playback for file {audio} at {date}'.format(audio=audio, date=playback_starts_at))
-            time.sleep(sleepy_time)
+            while end_time - start_time < timedelta(seconds=sleepy_time) and DAEMON_RUNNING[1]:
+                time.sleep(0.5)
+                end_time = datetime.now()
         if audio_file is not None and DAEMON_RUNNING[1]:
             CURRENTLY_PLAYING[1] = audio
             audio = AudioFile(file=audio_file)
@@ -174,12 +178,15 @@ def disable_random_playback():
     DAEMON_RUNNING[1] = False
     if RANDOM_PLAYBACK_PLAYER[0] is not None:
         RANDOM_PLAYBACK_PLAYER[0].close()
+    RANDOM_PLAYBACK_NEXT_UP[0] = "Nothing"
+    RANDOM_PLAYBACK_NEXT_UP[1] = -1
 
 def enable_random_playback():
     DAEMON_RUNNING[1] = True
-    if RANDOM_PLAYBACK_DAEMON is None or not RANDOM_PLAYBACK_DAEMON.is_alive():
-        RANDOM_PLAYBACK_DAEMON = threading.Thread(target=_random_audio_daemon, daemon=True)
-        RANDOM_PLAYBACK_DAEMON.start()
+    if RANDOM_PLAYBACK_DAEMON[0] is None or not RANDOM_PLAYBACK_DAEMON[0].is_alive():
+        RANDOM_PLAYBACK_DAEMON[0] = threading.Thread(target=_random_audio_daemon, daemon=True)
+        RANDOM_PLAYBACK_DAEMON[0].start()
+        time.sleep(0.2)
 
 def get_audio_files():
     ''' Returns all available audio files '''
@@ -187,6 +194,7 @@ def get_audio_files():
 
 def get_random_playback():
     random_playback_status = RANDOM_CONFIG.copy()
+    random_playback_status['status'] =  "enabled" if DAEMON_RUNNING[1] else "disabled";
     random_playback_status['next_up'] = RANDOM_PLAYBACK_NEXT_UP[0]
     random_playback_status['played_at'] = RANDOM_PLAYBACK_NEXT_UP[1]
     return random_playback_status
