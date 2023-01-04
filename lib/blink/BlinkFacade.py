@@ -3,6 +3,7 @@ from blinkstick import blinkstick
 from pathlib import Path
 from json import JSONDecodeError
 from queue import Queue
+from blinkstick.blinkstick import BlinkStickException
 from blinkstick import blinkstick
 import threading
 import time
@@ -152,7 +153,13 @@ def get_devices():
             continue
         device = BLINK_DEVICES[device_name]
         currenty_playing = {'blink': CURRENTLY_PLAYING[device_name], 'endless': ENDLESS_PLAY[device_name]} if CURRENTLY_PLAYING[device_name] is not None else None
-        entry = {'name': device.get_serial(), 'description': device.get_description(), 'manufacturer':  device.get_manufacturer(), 'currently_playing': currenty_playing}
+        try:
+            serial = device.get_serial()
+            desc = device.get_description()
+            manufact = device.get_manufacturer()
+        except BlinkStickException as e:
+            print("Device may be Busy")
+        entry = {'name': serial, 'description': desc, 'manufacturer':  manufact, 'currently_playing': currenty_playing}
         blink_list.append(entry)
     return blink_list
 

@@ -29,6 +29,7 @@ CFG_FILE = Path('data', 'configuration.json')
 with CFG_FILE.open(mode='r', encoding="utf8") as cfg_io:
     try:
         CONFIGURATION = json.loads(cfg_io.read())
+        print(CONFIGURATION)
     except JSONDecodeError as e:
         print("Error loading config file {file}".format(file=CFG_FILE.absolute()))
 
@@ -50,7 +51,7 @@ s.connect(("8.8.8.8", 80))
 IPAddr=s.getsockname()[0]
 # Init SSDP Server
 # Old name: "remote-talk-box-" + str(uuid.getnode())
-server = SSDPServer(CONFIGURATION['name'], device_type="remote-box-client", location='http://{ipaddr}:{port}/rt-box'.format(ipaddr=IPAddr, port=FLASK_PORT))
+server = SSDPServer(CONFIGURATION['name'], device_type="remote-box-client", location='http://{ipaddr}:{port}/rt-box'.format(ipaddr=IPAddr, port=CONFIGURATION['flask_port']))
 ssdp_daemon = threading.Thread(target=server.serve_forever, args=(), daemon=True)
 ssdp_daemon.start()
 
@@ -343,7 +344,7 @@ def exit_handler():
 atexit.register(exit_handler)
 
 if __name__ == '__main__':
-    flask_thread = threading.Thread(target=api.run, args=('0.0.0.0', FLASK_PORT), daemon=True)
+    flask_thread = threading.Thread(target=api.run, args=('0.0.0.0', CONFIGURATION['flask_port']), daemon=True)
     flask_thread.start()
 
 # Autoconnect to voice server

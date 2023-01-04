@@ -1,1 +1,1 @@
-{"host": "192.168.20.91", "name": "ai-cube-1", "password": "Asdf1234", "port": 12000, "username": "ai-cube-1"}
+{"flask_port": 5020, "host": "192.168.20.91", "name": "ai-cube-test", "password": "Asdf1234", "port": 12000, "username": "ai-cube-1"}
