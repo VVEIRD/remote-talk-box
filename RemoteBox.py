@@ -1,10 +1,13 @@
 from lib.mumble.client import MumbleClient
 import lib.blink.BlinkFacade as BlinkFacade
 import lib.audio.AudioFacade as AudioFacade
+from json import JSONDecodeError
+from pathlib import Path
 from lib.blink.blinker import BlinkTypes, Blink
 from queue import Queue
 from ssdpy import SSDPServer
 import socket, atexit
+import traceback
 
 from flask import Flask, Response, json, request
 
@@ -16,6 +19,27 @@ cmd_queue = Queue()
 
 FLASK_PORT=5020
 
+CONFIGURATION = {}
+
+# ------------------------------------------------------------------------------------------
+# Configuration
+# ------------------------------------------------------------------------------------------
+CFG_FILE = Path('data', 'configuration.json')
+
+with CFG_FILE.open(mode='r', encoding="utf8") as cfg_io:
+    try:
+        CONFIGURATION = json.loads(cfg_io.read())
+    except JSONDecodeError as e:
+        print("Error loading config file {file}".format(file=CFG_FILE.absolute()))
+
+def saveConfiguration():
+    try:
+        with CFG_FILE.open(mode='w', encoding="utf8") as cfg_io:
+            cfg_io.write(json.dumps(CONFIGURATION))
+    except Exception as e:
+        print("Error saving config file {file}".format(file=CFG_FILE.absolute()))
+
+
 # ------------------------------------------------------------------------------------------
 # Discoverability with SSDP
 # ------------------------------------------------------------------------------------------
@@ -25,7 +49,8 @@ s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 80))
 IPAddr=s.getsockname()[0]
 # Init SSDP Server
-server = SSDPServer("remote-talk-box-" + str(uuid.getnode()), device_type="remote-box-client", location='http://{ipaddr}:{port}/rt-box'.format(ipaddr=IPAddr, port=FLASK_PORT))
+# Old name: "remote-talk-box-" + str(uuid.getnode())
+server = SSDPServer(CONFIGURATION['name'], device_type="remote-box-client", location='http://{ipaddr}:{port}/rt-box'.format(ipaddr=IPAddr, port=FLASK_PORT))
 ssdp_daemon = threading.Thread(target=server.serve_forever, args=(), daemon=True)
 ssdp_daemon.start()
 
@@ -65,7 +90,8 @@ def led_device_status(device_name):
 
 @api.route('/rt-box/led/device/<device_name>/play/<name>', methods=['GET'])
 def play_blink(name, device_name, endless=False):
-    endless = request.args.get(key='endless', default=endless, type=bool)
+    endless = True if request.args.get(key='endless', default="", type=str).lower() == "true" else False
+    print("Endless: {end}".format(end=endless))
     try:
         BlinkFacade.play_blink(name=name, device=device_name, endless=endless)
     except ValueError as e:
@@ -84,7 +110,8 @@ def stop_blink(device):
 @api.route('/rt-box/led/play/<name>', methods=['GET'])
 def play_blink_2(name):
     device = request.args.get(key='device', default=None, type=str)
-    endless = request.args.get(key='endless', default=False, type=bool)
+    endless = True if request.args.get(key='endless', default="", type=str).lower() == "true" else False
+    print("Endless: {end}".format(end=endless))
     return play_blink(name=name, device_name=device, endless=endless)
 
 @api.route('/rt-box/led/play', methods=['GET'])
@@ -116,12 +143,18 @@ def get_blink(blink_name):
 def update_blink(blink_name):
     old_blink = BlinkFacade.get_blink(blink_name)
     try:
-        new_blink = Blink.from_json(request.json)
+        new_blink = Blink.from_json(request.data)
         BlinkFacade.save_blink(blink_name, new_blink)
         if old_blink is None:
-            return Response(json.dumps({'status': 'New blink saved', 'new': new_blink}, indent=4), status=200, mimetype='application/json')
-        return Response(json.dumps({'status': 'Blink updated', 'new': new_blink, 'old': old_blink}, indent=4), status=200, mimetype='application/json')
+            return Response(json.dumps({'status': 'blink saved', 'new': new_blink.to_dict()}, indent=4), status=200, mimetype='application/json')
+        return Response(json.dumps({'status': 'blink saved', 'new': new_blink.to_dict(), 'old': old_blink.to_dict()}, indent=4), status=200, mimetype='application/json')
     except Exception as e:
+        print('--JSON -------------------------------------------------------')
+        print (json.dumps({'error': str(e)}, indent=4))
+        print(request.data)
+        print('--TRACE ------------------------------------------------------')
+        print(traceback.format_exc())
+        print('--------------------------------------------------------------')
         return Response(json.dumps({'error': str(e)}, indent=4), status=400, mimetype='application/json')
 
 # ------------------------------------------------------------------------------------------
@@ -154,6 +187,12 @@ def connect_client():
     cmd_queue.put(cmd)
     while not cmd['processed']:
         time.sleep(0.2)
+    if json.loads(cmd['result'].get_data())['status'] == 'connected':
+        CONFIGURATION['host'] = host
+        CONFIGURATION['port'] = port
+        CONFIGURATION['username'] = username
+        CONFIGURATION['password'] = password
+        saveConfiguration()
     return cmd['result']
 
 @api.route('/rt-box/voice/disconnect', methods=['GET'])
@@ -286,7 +325,7 @@ def connect_to_server(host, port, username, password):
         return Response(json.dumps({'error': 'invalid password, connection refused'}, indent=4), status=401, mimetype='application/json')
     except:
         return Response(json.dumps({'error': 'internal server error'}, indent=4), status=500, mimetype='application/json')
-    return Response(json.dumps(get_status(), indent=4), status=200, mimetype='application/json')
+    return Response(json.dumps(get_voice_status(), indent=4), status=200, mimetype='application/json')
 
 def disconnect_from_server():
     try:
@@ -307,6 +346,18 @@ if __name__ == '__main__':
     flask_thread = threading.Thread(target=api.run, args=('0.0.0.0', FLASK_PORT), daemon=True)
     flask_thread.start()
 
+# Autoconnect to voice server
+
+if "host" in CONFIGURATION and "username" in CONFIGURATION and "password" in CONFIGURATION and "port" in CONFIGURATION:
+    cmd = {}
+    cmd['action']   = 'connect'
+    cmd['host']     = CONFIGURATION['host']
+    cmd['username'] = CONFIGURATION['username']
+    cmd['port']     = CONFIGURATION['port']
+    cmd['password'] = CONFIGURATION['password']
+    cmd['processed'] = False
+    cmd_queue.put(cmd)
+
 # Process connect and disconnect commands
 while True:
     cmd = cmd_queue.get()
@@ -314,11 +365,11 @@ while True:
         if cmd['action'] ==  'connect':
             cmd['result'] = connect_to_server(cmd['host'], cmd['port'], cmd['username'], cmd['password'])
             if cmd['result']  is None:
-                cmd['result'] = Response(json.dumps(get_status(), indent=4), status=500, mimetype='application/json')
+                cmd['result'] = Response(json.dumps(get_voice_status(), indent=4), status=500, mimetype='application/json')
         if cmd['action'] ==  'disconnect':
             cmd['result'] = disconnect_from_server()
             if cmd['result']  is None:
-                cmd['result'] = Response(json.dumps(get_status(), indent=4), status=500, mimetype='application/json')
+                cmd['result'] = Response(json.dumps(get_voice_status(), indent=4), status=500, mimetype='application/json')
         if cmd['action'] ==  'shutdown':
             time.sleep(1)
             exit()

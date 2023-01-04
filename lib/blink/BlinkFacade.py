@@ -40,6 +40,8 @@ def _blinker_daemon(stick_name):
             current_blink.animate(device=BLINK_DEVICES[stick_name], current_led_state=LED_STATES[stick_name])
             if not ENDLESS_PLAY[stick_name]:
                 #print("Removing: " + stick_name)
+                if BD_QUEUES[stick_name].empty() and not CURRENTLY_PLAYING[stick_name] == 'stop':
+                    play_blink('stop', device=stick_name, endless=False)
                 current_blink = None
                 CURRENTLY_PLAYING[stick_name] = None
                 ENDLESS_PLAY[stick_name] = False

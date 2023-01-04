@@ -33,6 +33,9 @@ class MumbleClient:
             self.mumble.sound_output.add_sound(data)
 
     def connect(self, host=None, username=None, pwd=None, port=None):
+        # Disconnect existing sessions
+        if self.get_session() is not None:
+            self.disconnect()
         try:
             if host is not None:
                 self.server = host
@@ -88,7 +91,10 @@ class MumbleClient:
 
     def disconnect(self):
         '''Disconnect from Mumble Server and tell the audio daemon to stop'''
-        self.mumble.stop()
+        try:
+            self.mumble.stop()
+        except Exception as e:
+            a = ''
         self.active = False
         # close the stream and pyaudio instance
         self.stream_listen.stop_stream()

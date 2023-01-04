@@ -194,7 +194,7 @@ def get_audio_files():
 
 def get_random_playback():
     random_playback_status = RANDOM_CONFIG.copy()
-    random_playback_status['status'] =  "enabled" if DAEMON_RUNNING[1] else "disabled";
+    random_playback_status['status'] =  "enabled" if DAEMON_RUNNING[1] else "disabled"
     random_playback_status['next_up'] = RANDOM_PLAYBACK_NEXT_UP[0]
     random_playback_status['played_at'] = RANDOM_PLAYBACK_NEXT_UP[1]
     return random_playback_status

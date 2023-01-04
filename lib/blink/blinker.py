@@ -164,7 +164,7 @@ class Blink:
                 gradient.append(leds)
         return gradient
 
-    def to_json(self):
+    def to_json(self, use_indent=True):
         json_o = {}
         json_o['type'] = self.type
         json_o['color_target'] = self.color_target
@@ -176,11 +176,36 @@ class Blink:
         json_o['led_count'] = self.led_count
         json_o['filter_frames'] = self.filter_frames
         json_o['loop'] = self.loop
-        return json.dumps(json_o, indent=4)
+        if use_indent:
+            return json.dumps(json_o, indent=4)
+        else:
+            return json.dumps(json_o)
+
+    def to_dict(self):
+        json_o = {}
+        json_o['type'] = self.type
+        json_o['color_target'] = self.color_target
+        json_o['color_source'] = self.color_source
+        json_o['duration_ms'] = self.duration_ms
+        json_o['decay'] = self.decay
+        json_o['FPS'] = self.FPS
+        json_o['brightnes'] = self.brightnes
+        json_o['led_count'] = self.led_count
+        json_o['filter_frames'] = self.filter_frames
+        json_o['loop'] = self.loop
+        return json_o
 
     @staticmethod
     def from_json(json_text):
         json_o = json.loads(json_text)
+        print('--JSON -------------------------------------------------------')
+        print(json_o)
+        print('-- FIELDS-----------------------------------------------------')
+        print('Type:    {d}'.format(d=json_o['type']))
+        print('FPS:     {d}'.format(d=json_o['FPS']))
+        print('Color-S: {d}'.format(d=json_o['color_source']))
+        print('Color-T: {d}'.format(d=json_o['color_target']))
+        print('--------------------------------------------------------------')
         b = Blink(
             type = json_o['type'],
             color_target = json_o['color_target'],
