@@ -153,6 +153,9 @@ def get_devices():
             continue
         device = BLINK_DEVICES[device_name]
         currenty_playing = {'blink': CURRENTLY_PLAYING[device_name], 'endless': ENDLESS_PLAY[device_name]} if CURRENTLY_PLAYING[device_name] is not None else None
+        serial = 'UNKNOWN'
+        desc = 'UNKNOWN'
+        manufact = 'UNKNOWN'
         try:
             serial = device.get_serial()
             desc = device.get_description()
