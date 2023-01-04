@@ -160,7 +160,7 @@ def get_devices():
             serial = device.get_serial()
             desc = device.get_description()
             manufact = device.get_manufacturer()
-        except BlinkStickException as e:
+        except Exception as e:
             print("Device may be Busy")
         entry = {'name': serial, 'description': desc, 'manufacturer':  manufact, 'currently_playing': currenty_playing}
         blink_list.append(entry)
