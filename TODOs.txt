@@ -1,0 +1,16 @@
+TODOs MM Software:
+- Funktionen nach Art in eigene Prozesse unterbringen
+- Ein Mutterprozess, der die anderen Prozesse starten/stoppen/killen kann
+
+  Mutterprozess   (:5020)
+  + LED Prozess   (:5021)
+  + Audio Process (:5022)
+  + Voice Prozess (:5023)
+
+- Eine Steuerungsoberfläche, welche sich mit dem  Mutterprozess verbinden und diesen start/stopp/kill ANweisungen geben kann
+- Die GUI Robuster bauen (z.B. Statusabfragen laggen die GUI nicht mehr)
+- Der Voice Prozess soll ggf die Mikrofonübertragung deaktivieren, wenn aktiv an den Würfel gesendet wird (ggf high/low Erkennung am Audiosignal vom Remote Client)
+- Komplexere LED animationen erlauben
+- Reines Audiosoundboard von den LED/Gemischten Effekten trennen.
+- Ggf Lautstärkesteuerung durch alsa-mixer
+- Auth mit secret in der Config einbauen
