@@ -6,6 +6,7 @@ TODOs MM Software:
   + LED Prozess   (:5021)
   + Audio Process (:5022)
   + Voice Prozess (:5023)
+  + Mixer Process (:5024)
 
 - Eine Steuerungsoberfläche, welche sich mit dem  Mutterprozess verbinden und diesen start/stopp/kill ANweisungen geben kann
 - Die GUI Robuster bauen (z.B. Statusabfragen laggen die GUI nicht mehr)
