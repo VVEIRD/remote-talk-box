@@ -147,7 +147,7 @@ def startup_voice():
         return Response(json.dumps({'status': 'Access forbidden, please provide a valid access token'}, indent=4), status=403, mimetype='application/json')
     if not is_process_running(PROCESSES['voice']):
         py_script = str(Path('VoiceProcess.py').resolve())
-        port = FLASK_PORT + 2
+        port = FLASK_PORT + 3
         agrs = ['python', py_script, str(port)]
         PROCESSES['voice'] = subprocess.Popen(agrs, shell=CONFIGURATION['use_shell'])
         return Response(json.dumps({'status': 'Voice process started'}, indent=4), status=200, mimetype='application/json')
@@ -279,30 +279,34 @@ DAEMON_RUNNING = True
 def _status_updater(run_once=False):
     cookies = {'accessToken': CONFIGURATION['secret']}
     while DAEMON_RUNNING and not run_once:
-        if is_process_running(PROCESSES['led']):
-            response = requests.get(ENDPOINTS['led'], cookies=cookies)
-            if response.status_code == 200:
-                status = response.json()
-                status['last_update'] = datetime.now().isoformat()
-            else:
-                status = {'status': 'process not reachable', 'last_update': datetime.now()}
-            ENDPOINT_STATUS['led'] = status
-        if is_process_running(PROCESSES['audio']):
-            response = requests.get(ENDPOINTS['audio'], cookies=cookies)
-            if response.status_code == 200:
-                status = response.json()
-                status['last_update'] = datetime.now().isoformat()
-            else:
-                status = {'status': 'process not reachable', 'last_update': datetime.now()}
-            ENDPOINT_STATUS['audio'] = status
-        if is_process_running(PROCESSES['voice']):
-            response = requests.get(ENDPOINTS['voice'], cookies=cookies)
-            if response.status_code == 200:
-                status = response.json()
-                status['last_update'] = datetime.now().isoformat()
-            else:
-                status = {'status': 'process not reachable', 'last_update': datetime.now()}
-            ENDPOINT_STATUS['voice'] = status
+        try:
+            if is_process_running(PROCESSES['led']):
+                response = requests.get(ENDPOINTS['led'], cookies=cookies)
+                if response.status_code == 200:
+                    status = response.json()
+                    status['last_update'] = datetime.now().isoformat()
+                else:
+                    status = {'status': 'process not reachable', 'last_update': datetime.now()}
+                ENDPOINT_STATUS['led'] = status
+            if is_process_running(PROCESSES['audio']):
+                response = requests.get(ENDPOINTS['audio'], cookies=cookies)
+                if response.status_code == 200:
+                    status = response.json()
+                    status['last_update'] = datetime.now().isoformat()
+                else:
+                    status = {'status': 'process not reachable', 'last_update': datetime.now()}
+                ENDPOINT_STATUS['audio'] = status
+            if is_process_running(PROCESSES['voice']):
+                response = requests.get(ENDPOINTS['voice'], cookies=cookies)
+                if response.status_code == 200:
+                    status = response.json()
+                    status['last_update'] = datetime.now().isoformat()
+                else:
+                    status = {'status': 'process not reachable', 'last_update': datetime.now()}
+                ENDPOINT_STATUS['voice'] = status
+        except Exception as e:
+            print("Error getting status update")
+            print(e)
         time.sleep(.75)
 
 time.sleep(1)
