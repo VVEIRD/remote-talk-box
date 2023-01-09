@@ -217,7 +217,7 @@ while True:
     cmd = cmd_queue.get()
     if cmd is not None:
         if cmd['action'] ==  'shutdown':
-            time.sleep(1)
+            time.sleep(0.5)
             exit()
         cmd['processed'] = True
     time.sleep(0.5)

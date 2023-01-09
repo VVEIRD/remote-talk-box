@@ -69,10 +69,14 @@ api = Flask(__name__)
 
 @api.route('/rt-box', methods=['GET'], strict_slashes=False)
 def get_overview():
+    if (request.cookies.get('accessToken') != CONFIGURATION['secret']):
+        return Response(json.dumps({'status': 'Access forbidden, please provide a valid access token'}, indent=4), status=403, mimetype='application/json')
     return Response(json.dumps(get_status(), indent=4), status=200, mimetype='application/json')
 
 @api.route('/rt-box/shutdown', methods=['GET'])
 def shutdown_client():
+    if (request.cookies.get('accessToken') != CONFIGURATION['secret']):
+        return Response(json.dumps({'status': 'Access forbidden, please provide a valid access token'}, indent=4), status=403, mimetype='application/json')
     cmd = {}
     cmd['action'] = 'shutdown'
     cmd_queue.put(cmd)
@@ -86,11 +90,15 @@ def shutdown_client():
 
 @api.route('/rt-box/voice', methods=['GET'], strict_slashes=False)
 def ROUTE_get_voice_overview():
+    if (request.cookies.get('accessToken') != CONFIGURATION['secret']):
+        return Response(json.dumps({'status': 'Access forbidden, please provide a valid access token'}, indent=4), status=403, mimetype='application/json')
     voice = get_voice_status()
     return Response(json.dumps({'voice': voice}, indent=4), status=200, mimetype='application/json')
 
 @api.route('/rt-box/voice/connect', methods=['GET'])
 def connect_client():
+    if (request.cookies.get('accessToken') != CONFIGURATION['secret']):
+        return Response(json.dumps({'status': 'Access forbidden, please provide a valid access token'}, indent=4), status=403, mimetype='application/json')
     host = request.args.get('host')
     port = request.args.get('port')
     try:
@@ -120,6 +128,8 @@ def connect_client():
 
 @api.route('/rt-box/voice/disconnect', methods=['GET'])
 def disconnect_client():
+    if (request.cookies.get('accessToken') != CONFIGURATION['secret']):
+        return Response(json.dumps({'status': 'Access forbidden, please provide a valid access token'}, indent=4), status=403, mimetype='application/json')
     cmd = {}
     cmd['action'] = 'disconnect'
     cmd['processed'] = False
@@ -202,7 +212,7 @@ while True:
             if cmd['result']  is None:
                 cmd['result'] = Response(json.dumps(get_voice_status(), indent=4), status=500, mimetype='application/json')
         if cmd['action'] ==  'shutdown':
-            time.sleep(1)
+            time.sleep(0.5)
             exit()
         cmd['processed'] = True
     time.sleep(0.5)

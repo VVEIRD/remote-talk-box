@@ -19,6 +19,13 @@ CONFIGURATION = {}
 # ------------------------------------------------------------------------------------------
 # Configuration
 # ------------------------------------------------------------------------------------------
+
+# Get IP Adress
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8", 80))
+IPAddr=s.getsockname()[0]
+
+# Load Configuration file
 CFG_FILE = Path('data', 'configuration.json')
 
 with CFG_FILE.open(mode='r', encoding="utf8") as cfg_io:
@@ -37,13 +44,15 @@ def saveConfiguration():
 
 FLASK_PORT = CONFIGURATION['flask_port']
 
+PROCESSES = {'led': None, 'audio': None, 'voice': None}
 
-LED_PROCESS = None
 ENDPOINT_STATUS = {'led': None, 'audio': None, 'voice': None}
 
-AUDIO_PROCESS = None
-
-VOICE_PROCESS = None
+ENDPOINTS = {
+    'led':   'http://{ip_addr}:{port}/rt-box'.format(ip_addr=IPAddr, port=FLASK_PORT+1),
+    'audio': 'http://{ip_addr}:{port}/rt-box'.format(ip_addr=IPAddr, port=FLASK_PORT+2),
+    'voice': 'http://{ip_addr}:{port}/rt-box'.format(ip_addr=IPAddr, port=FLASK_PORT+3),
+}
 
 # ------------------------------------------------------------------------------------------
 # Autostart subprocesses
@@ -53,19 +62,19 @@ if CONFIGURATION['led_process']:
     py_script = str(Path('LedProcess.py').resolve())
     port = FLASK_PORT + 1
     agrs = ['python', py_script, str(port)]
-    LED_PROCESS = subprocess.Popen(agrs, shell=CONFIGURATION['use_shell'])
+    PROCESSES['led'] = subprocess.Popen(agrs, shell=CONFIGURATION['use_shell'])
 
 if CONFIGURATION['audio_process']:
     py_script = str(Path('AudioProcess.py').resolve())
     port = FLASK_PORT + 2
     agrs = ['python', py_script, str(port)]
-    AUDIO_PROCESS = subprocess.Popen(agrs, shell=CONFIGURATION['use_shell'])
+    PROCESSES['audio'] = subprocess.Popen(agrs, shell=CONFIGURATION['use_shell'])
 
 if CONFIGURATION['voice_process']:
     py_script = str(Path('VoiceProcess.py').resolve())
     port = FLASK_PORT + 3
     agrs = ['python', py_script, str(port)]
-    VOICE_PROCESS = subprocess.Popen(agrs, shell=CONFIGURATION['use_shell'])
+    PROCESSES['voice'] = subprocess.Popen(agrs, shell=CONFIGURATION['use_shell'])
 
 print('------------------ 1 -----------------')
 
@@ -73,10 +82,6 @@ print('------------------ 1 -----------------')
 # Discoverability with SSDP
 # ------------------------------------------------------------------------------------------
 
-# Get IP Adress
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(("8.8.8.8", 80))
-IPAddr=s.getsockname()[0]
 # Init SSDP Server
 # Old name: "remote-talk-box-" + str(uuid.getnode())
 server = SSDPServer(CONFIGURATION['name'], device_type="remote-box-client", location='http://{ipaddr}:{port}/rt-box'.format(ipaddr=IPAddr, port=FLASK_PORT))
@@ -93,16 +98,111 @@ api = Flask(__name__)
 
 @api.route('/rt-box', methods=['GET'], strict_slashes=False)
 def get_overview():
+    if (request.cookies.get('accessToken') != CONFIGURATION['secret']):
+        return Response(json.dumps({'status': 'Access forbidden, please provide a valid access token'}, indent=4), status=403, mimetype='application/json')
     return Response(json.dumps(get_status(), indent=4), status=200, mimetype='application/json')
 
 @api.route('/rt-box/shutdown', methods=['GET'])
 def shutdown_client():
+    if (request.cookies.get('accessToken') != CONFIGURATION['secret']):
+        return Response(json.dumps({'status': 'Access forbidden, please provide a valid access token'}, indent=4), status=403, mimetype='application/json')
     cmd = {}
     cmd['action'] = 'shutdown'
     cmd_queue.put(cmd)
     return Response(json.dumps({'shutdown': True}, indent=4), status=200, mimetype='application/json')
 
 print('------------------ 3 -----------------')
+
+# ------------------------------------------------------------------------------------------
+# Startup API Calls
+# ------------------------------------------------------------------------------------------
+
+@api.route('/rt-box/led/startup', methods=['GET'])
+def startup_led():
+    if (request.cookies.get('accessToken') != CONFIGURATION['secret']):
+        return Response(json.dumps({'status': 'Access forbidden, please provide a valid access token'}, indent=4), status=403, mimetype='application/json')
+    if not is_process_running(PROCESSES['led']):
+        py_script = str(Path('LedProcess.py').resolve())
+        port = FLASK_PORT + 1
+        agrs = ['python', py_script, str(port)]
+        PROCESSES['led'] = subprocess.Popen(agrs, shell=CONFIGURATION['use_shell'])
+        return Response(json.dumps({'status': 'LED process started'}, indent=4), status=200, mimetype='application/json')
+    return Response(json.dumps({'status': 'LED process started'}, indent=4), status=200, mimetype='application/json')
+
+@api.route('/rt-box/audio/startup', methods=['GET'])
+def startup_audio():
+    if (request.cookies.get('accessToken') != CONFIGURATION['secret']):
+        return Response(json.dumps({'status': 'Access forbidden, please provide a valid access token'}, indent=4), status=403, mimetype='application/json')
+    if not is_process_running(PROCESSES['audio']):
+        py_script = str(Path('AudioProcess.py').resolve())
+        port = FLASK_PORT + 2
+        agrs = ['python', py_script, str(port)]
+        PROCESSES['audio'] = subprocess.Popen(agrs, shell=CONFIGURATION['use_shell'])
+        return Response(json.dumps({'status': 'Audio process started'}, indent=4), status=200, mimetype='application/json')
+    return Response(json.dumps({'status': 'Audio process started'}, indent=4), status=200, mimetype='application/json')
+
+@api.route('/rt-box/voice/startup', methods=['GET'])
+def startup_voice():
+    if (request.cookies.get('accessToken') != CONFIGURATION['secret']):
+        return Response(json.dumps({'status': 'Access forbidden, please provide a valid access token'}, indent=4), status=403, mimetype='application/json')
+    if not is_process_running(PROCESSES['voice']):
+        py_script = str(Path('VoiceProcess.py').resolve())
+        port = FLASK_PORT + 2
+        agrs = ['python', py_script, str(port)]
+        PROCESSES['voice'] = subprocess.Popen(agrs, shell=CONFIGURATION['use_shell'])
+        return Response(json.dumps({'status': 'Voice process started'}, indent=4), status=200, mimetype='application/json')
+    return Response(json.dumps({'status': 'Voice process started'}, indent=4), status=200, mimetype='application/json')
+
+
+# ------------------------------------------------------------------------------------------
+# Shutdown API Calls
+# ------------------------------------------------------------------------------------------
+
+@api.route('/rt-box/led/shutdown', methods=['GET'])
+def shutdown_led():
+    if (request.cookies.get('accessToken') != CONFIGURATION['secret']):
+        return Response(json.dumps({'status': 'Access forbidden, please provide a valid access token'}, indent=4), status=403, mimetype='application/json')
+    force = True if request.args.get(key='force', default="", type=str).lower() == "true" else False
+    if is_process_running(PROCESSES['led']):
+        # Try gracefull termination
+        succ = call_shutdown_endpoint('led')
+        if force:
+            PROCESSES['led'].terminate()
+        PROCESSES['led'] = None
+        if succ:
+            return Response(json.dumps({'status': 'LED process killed'}, indent=4), status=200, mimetype='application/json')
+    return Response(json.dumps({'status': 'LED process not killed'}, indent=4), status=200, mimetype='application/json')
+
+@api.route('/rt-box/audio/shutdown', methods=['GET'])
+def shutdown_audio():
+    if (request.cookies.get('accessToken') != CONFIGURATION['secret']):
+        return Response(json.dumps({'status': 'Access forbidden, please provide a valid access token'}, indent=4), status=403, mimetype='application/json')
+    force = True if request.args.get(key='force', default="", type=str).lower() == "true" else False
+    if is_process_running(PROCESSES['audio']):
+        # Try gracefull termination
+        succ = call_shutdown_endpoint('audio')
+        if force:
+            PROCESSES['audio'].terminate()
+        PROCESSES['audio'] = None
+        if succ:
+            return Response(json.dumps({'status': 'Audio process killed'}, indent=4), status=200, mimetype='application/json')
+    return Response(json.dumps({'status': 'Audio process not killed'}, indent=4), status=200, mimetype='application/json')
+
+@api.route('/rt-box/voice/shutdown', methods=['GET'])
+def shutdown_voice():
+    if (request.cookies.get('accessToken') != CONFIGURATION['secret']):
+        return Response(json.dumps({'status': 'Access forbidden, please provide a valid access token'}, indent=4), status=403, mimetype='application/json')
+    force = True if request.args.get(key='force', default="", type=str).lower() == "true" else False
+    if is_process_running(PROCESSES['voice']):
+        # Try gracefull termination
+        succ = call_shutdown_endpoint('voice')
+        if force:
+            PROCESSES['voice'].terminate()
+        PROCESSES['voice'] = None
+        if succ:
+            return Response(json.dumps({'status': 'Voice process killed'}, indent=4), status=200, mimetype='application/json')
+    return Response(json.dumps({'status': 'Voice process not killed'}, indent=4), status=200, mimetype='application/json')
+
 
 # ------------------------------------------------------------------------------------------
 # Functions
@@ -115,32 +215,52 @@ def get_status():
     voice = get_voice_process_status()
     led_status= get_led_process_status()
     audio = get_audio_process_status()
-    return {'voice': voice, 'led': led_status, 'audio': audio}
-    return AUDIO_STATUS
+    processes = {}
+    endpoints = {}
+    processes['led']   = 'online' if is_process_running(PROCESSES['led']) else 'offline'
+    processes['audio'] = 'online' if is_process_running(PROCESSES['audio']) else 'offline'
+    processes['voice'] = 'online' if is_process_running(PROCESSES['voice']) else 'offline'
+    status = {'voice': voice, 'led': led_status, 'audio': audio, 'endpoints': endpoints, 'processes': processes}
+    if is_process_running(PROCESSES['led']):
+        endpoints['led'] = ENDPOINTS['led']
+    if is_process_running(PROCESSES['audio']):
+        endpoints['audio'] = ENDPOINTS['audio']
+    if is_process_running(PROCESSES['voice']):
+        endpoints['voice'] = ENDPOINTS['voice']
+    return status
 
 def get_led_process_status():
-    if not is_process_running(LED_PROCESS):
-        return {'status': 'offline'}
+    if not is_process_running(PROCESSES['led']):
+        return None
     return ENDPOINT_STATUS['led']
 
 def get_audio_process_status():
-    if not is_process_running(AUDIO_PROCESS):
-        return {'status': 'offline'}
+    if not is_process_running(PROCESSES['audio']):
+        return None
     return ENDPOINT_STATUS['audio']
 
 # TODO create status functions
 def get_voice_process_status():
-    if not is_process_running(VOICE_PROCESS):
-        return {'status': 'offline'}
+    if not is_process_running(PROCESSES['voice']):
+        return None
     return ENDPOINT_STATUS['voice']
 
+def call_shutdown_endpoint(endpointName:str):
+    if endpointName in PROCESSES:
+        cookies = {'accessToken': CONFIGURATION['secret']}
+        ep = ENDPOINTS[endpointName] + '/shutdown'
+        response = requests.get(ep, cookies=cookies)
+        if response.status_code == 200:
+            return True
+    return False
+
 def exit_handler():
-    if LED_PROCESS is not None:
-        LED_PROCESS.terminate()
-    if AUDIO_PROCESS is not None:
-        AUDIO_PROCESS.terminate()
-    if VOICE_PROCESS is not None:
-        VOICE_PROCESS.terminate()
+    if PROCESSES['led'] is not None:
+        PROCESSES['led'].terminate()
+    if PROCESSES['audio'] is not None:
+        PROCESSES['audio'].terminate()
+    if PROCESSES['voice'] is not None:
+        PROCESSES['voice'].terminate()
 
 atexit.register(exit_handler)
 
@@ -158,28 +278,25 @@ DAEMON_RUNNING = True
 
 def _status_updater(run_once=False):
     cookies = {'accessToken': CONFIGURATION['secret']}
-    led_url   = "http://{ip_addr}:{port}/rt-box".format(ip_addr=IPAddr, port=FLASK_PORT+1)
-    audio_url = "http://{ip_addr}:{port}/rt-box".format(ip_addr=IPAddr, port=FLASK_PORT+2)
-    voice_url = "http://{ip_addr}:{port}/rt-box".format(ip_addr=IPAddr, port=FLASK_PORT+3)
     while DAEMON_RUNNING and not run_once:
-        if is_process_running(LED_PROCESS):
-            response = requests.get(led_url, cookies=cookies)
+        if is_process_running(PROCESSES['led']):
+            response = requests.get(ENDPOINTS['led'], cookies=cookies)
             if response.status_code == 200:
                 status = response.json()
                 status['last_update'] = datetime.now().isoformat()
             else:
                 status = {'status': 'process not reachable', 'last_update': datetime.now()}
             ENDPOINT_STATUS['led'] = status
-        if is_process_running(AUDIO_PROCESS):
-            response = requests.get(audio_url, cookies=cookies)
+        if is_process_running(PROCESSES['audio']):
+            response = requests.get(ENDPOINTS['audio'], cookies=cookies)
             if response.status_code == 200:
                 status = response.json()
                 status['last_update'] = datetime.now().isoformat()
             else:
                 status = {'status': 'process not reachable', 'last_update': datetime.now()}
             ENDPOINT_STATUS['audio'] = status
-        if is_process_running(VOICE_PROCESS):
-            response = requests.get(voice_url, cookies=cookies)
+        if is_process_running(PROCESSES['voice']):
+            response = requests.get(ENDPOINTS['voice'], cookies=cookies)
             if response.status_code == 200:
                 status = response.json()
                 status['last_update'] = datetime.now().isoformat()
@@ -196,22 +313,22 @@ STATUS_UPDATER_DAEMON.start()
 
 print('------------------ 5 -----------------')
 
-time.sleep(5)
+time.sleep(1)
 print('-------------------------------------')
-print("LED Process:   " + str(LED_PROCESS))
-po = LED_PROCESS.poll()
+print("LED Process:   " + str(PROCESSES['led']))
+po = PROCESSES['led'].poll()
 print("LED Poll:      " + str(len(po) if po is not None else po))
-print("is Running:    " + str(is_process_running(LED_PROCESS)))
+print("is Running:    " + str(is_process_running(PROCESSES['led'])))
 print('-------------------------------------')
-print("Audio Process: " + str(AUDIO_PROCESS))
-po = AUDIO_PROCESS.poll()
+print("Audio Process: " + str(PROCESSES['audio']))
+po = PROCESSES['audio'].poll()
 print("Audio Poll:    " + str(len(po) if po is not None else po))
-print("is Running:    " + str(is_process_running(AUDIO_PROCESS)))
+print("is Running:    " + str(is_process_running(PROCESSES['audio'])))
 print('-------------------------------------')
-print("Voice Process: " + str(VOICE_PROCESS))
-po = VOICE_PROCESS.poll()
+print("Voice Process: " + str(PROCESSES['voice']))
+po = PROCESSES['voice'].poll()
 print("Voice Poll:    " + str(len(po) if po is not None else po))
-print("is Running:    " + str(is_process_running(VOICE_PROCESS)))
+print("is Running:    " + str(is_process_running(PROCESSES['voice'])))
 print('-------------------------------------')
 
 print('------------------ 6 -----------------')
@@ -221,7 +338,7 @@ while True:
     cmd = cmd_queue.get()
     if cmd is not None:
         if cmd['action'] ==  'shutdown':
-            time.sleep(1)
+            time.sleep(0.5)
             exit()
         cmd['processed'] = True
     time.sleep(0.5)
