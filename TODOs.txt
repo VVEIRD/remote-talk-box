@@ -1,5 +1,5 @@
 TODOs MM Software:
-- Funktionen nach Art in eigene Prozesse unterbringen
+X Funktionen nach Art in eigene Prozesse unterbringen
 - Ein Mutterprozess, der die anderen Prozesse starten/stoppen/killen kann
 
   Mutterprozess   (:5020)
@@ -14,7 +14,7 @@ TODOs MM Software:
 - Komplexere LED animationen erlauben
 - Reines Audiosoundboard von den LED/Gemischten Effekten trennen.
 - Ggf Lautstärkesteuerung durch alsa-mixer
-- Auth mit secret in der Config einbauen
-- Audio hochladen
-- Audio liste wird dynamisch vom FS gelesen, anstatt gecached zu werden
+X Auth mit secret in der Config einbauen
+? Audio hochladen
+X Audio liste wird dynamisch vom FS gelesen, anstatt gecached zu werden
 - GUI: Random audio playlist edit

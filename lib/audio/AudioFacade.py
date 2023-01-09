@@ -56,8 +56,6 @@ class AudioFile:
 
 LD_PATH = Path('data', 'audio')
 
-AUDIO_FILES = {}
-
 AUDIO_PLAYER = [None]
 
 AUDIO_DAEMON = [None]
@@ -80,9 +78,6 @@ CURRENTLY_PLAYING = [None, None]
 
 def __init__():
     LD_PATH.mkdir(parents=True, exist_ok=True)
-    # Load Audio library
-    for audio_file in LD_PATH.rglob("*.wav"):
-        AUDIO_FILES[audio_file.stem] = str(audio_file.resolve())
     AUDIO_DAEMON = threading.Thread(target=_audio_daemon, daemon=True)
     AUDIO_DAEMON.start()
     # Load Random Audio player
@@ -103,7 +98,7 @@ def _audio_daemon():
     while DAEMON_RUNNING[0]:
         if not AUDIO_QUEUE.empty():
             audio = AUDIO_QUEUE.get()
-            audio_file = AUDIO_FILES[audio]
+            audio_file = read_audio_files()[audio]
         if audio_file is not None:
             CURRENTLY_PLAYING[0] = audio
             audio = AudioFile(file=audio_file)
@@ -128,7 +123,7 @@ def _random_audio_daemon():
         audio = random.choice(RANDOM_CONFIG['list'])
         RANDOM_PLAYBACK_NEXT_UP[0] = audio
         RANDOM_PLAYBACK_NEXT_UP[1] = playback_starts_at.isoformat()
-        audio_file = AUDIO_FILES[audio]
+        audio_file = read_audio_files()[audio]
         # Queue file only if it exists (It should, but it could have been deleted on fs)
         if audio_file is not None:
             start_time = datetime.now()
@@ -151,8 +146,17 @@ def _random_audio_daemon():
         time.sleep(0.5)
     print('Stop random audio daemon')
 
+def get_audio_folder():
+    return str(LD_PATH.resolve())
+
+def read_audio_files():
+    AUDIO_FILES = {}
+    for audio_file in LD_PATH.rglob("*.wav"):
+        AUDIO_FILES[audio_file.stem] = str(audio_file.resolve())
+    return AUDIO_FILES
+
 def play_audio_file(name:str):
-    if name not in AUDIO_FILES:
+    if name not in read_audio_files():
         raise ValueError("Audiofile {name} does not exists".format(name=name))
     AUDIO_QUEUE.put(name)
 
@@ -190,7 +194,7 @@ def enable_random_playback():
 
 def get_audio_files():
     ''' Returns all available audio files '''
-    return [audio_name for audio_name in AUDIO_FILES]
+    return [file for file in read_audio_files()]
 
 def get_random_playback():
     random_playback_status = RANDOM_CONFIG.copy()
@@ -200,7 +204,7 @@ def get_random_playback():
     return random_playback_status
 
 def add_random_playback(name:str):
-    if name not in AUDIO_FILES:
+    if name not in read_audio_files():
         raise ValueError("Cannot Audiofile {name} to random playback, it does not exists".format(name=name))
     if name not in RANDOM_CONFIG['list']:
         RANDOM_CONFIG['list'].append(name)

@@ -1,1 +1,1 @@
-{"flask_port": 5020, "host": "192.168.20.91", "name": "ai-cube-test", "password": "Asdf1234", "port": 12000, "username": "ai-cube-1"}
+{"audio_process": true, "flask_port": 5020, "host": "192.168.20.91", "led_process": true, "name": "ai-cube-test", "password": "Asdf1234", "port": 12000, "secret": "aSdF_4R52_NgP9_2", "use_shell": false, "username": "ai-cube-1", "voice_process": true}
