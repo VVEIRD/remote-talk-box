@@ -38,7 +38,7 @@ with CFG_FILE.open(mode='r', encoding="utf8") as cfg_io:
 def saveConfiguration():
     try:
         with CFG_FILE.open(mode='w', encoding="utf8") as cfg_io:
-            cfg_io.write(json.dumps(CONFIGURATION))
+            cfg_io.write(json.dumps(CONFIGURATION), indent=4)
     except Exception as e:
         print("Error saving config file {file}".format(file=CFG_FILE.absolute()))
 
