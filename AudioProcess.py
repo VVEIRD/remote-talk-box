@@ -20,6 +20,9 @@ CONFIGURATION = {}
 # Configuration
 # ------------------------------------------------------------------------------------------
 
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 CFG_FILE = Path('data', 'configuration.json')
 

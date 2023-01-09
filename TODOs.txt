@@ -18,3 +18,4 @@ X Auth mit secret in der Config einbauen
 ? Audio hochladen
 X Audio liste wird dynamisch vom FS gelesen, anstatt gecached zu werden
 - GUI: Random audio playlist edit
+- Restart Led Process on USB error, restart animation if one was playing
