@@ -3,7 +3,6 @@ from lib.helper import is_int
 from json import JSONDecodeError
 from pathlib import Path
 from queue import Queue
-from ssdpy import SSDPServer
 import socket
 import sys
 
@@ -56,9 +55,6 @@ s.connect(("8.8.8.8", 80))
 IPAddr=s.getsockname()[0]
 # Init SSDP Server
 # Old name: "remote-talk-box-" + str(uuid.getnode())
-server = SSDPServer(CONFIGURATION['name'], device_type="remote-box-client", location='http://{ipaddr}:{port}/rt-box'.format(ipaddr=IPAddr, port=FLASK_PORT))
-ssdp_daemon = threading.Thread(target=server.serve_forever, args=(), daemon=True)
-ssdp_daemon.start()
 
 
 # ------------------------------------------------------------------------------------------

@@ -288,6 +288,10 @@ def _status_updater(run_once=False):
                 else:
                     status = {'status': 'process not reachable', 'last_update': datetime.now()}
                 ENDPOINT_STATUS['led'] = status
+        except Exception as e:
+            print("Error getting status update")
+            print(e)
+        try:
             if is_process_running(PROCESSES['audio']):
                 response = requests.get(ENDPOINTS['audio'], cookies=cookies)
                 if response.status_code == 200:
@@ -296,6 +300,10 @@ def _status_updater(run_once=False):
                 else:
                     status = {'status': 'process not reachable', 'last_update': datetime.now()}
                 ENDPOINT_STATUS['audio'] = status
+        except Exception as e:
+            print("Error getting status update")
+            print(e)
+        try:
             if is_process_running(PROCESSES['voice']):
                 response = requests.get(ENDPOINTS['voice'], cookies=cookies)
                 if response.status_code == 200:
